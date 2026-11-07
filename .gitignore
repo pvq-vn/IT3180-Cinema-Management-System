@@ -1,0 +1,12 @@
+/target/
+/bin/
+/build/
+.idea/
+.vscode/
+*.class
+*.jar
+.DS_Store
+
+# Tránh đẩy mật khẩu DB lên GitHub
+application-local.properties
+config/db.properties
