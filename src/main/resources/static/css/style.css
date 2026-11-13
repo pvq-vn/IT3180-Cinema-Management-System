@@ -1,0 +1,969 @@
+/* =============================================================================
+ * CINEHUB CMS - BẢNG ĐỊNH KIỂU GIAO DIỆN WEB MVC (static/css/style.css)
+ * Thiết kế giao diện: Lê Anh Tuấn (202416639) - Tuân thủ chuẩn Chương 7 IT3180
+ * ============================================================================= */
+
+:root {
+    --bg-primary: #0f172a;
+    --bg-card: #1e293b;
+    --bg-surface: #273549;
+    --bg-input: #0f172a;
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+    --accent-gold: #f59e0b;
+    --accent-crimson: #e11d48;
+    --accent-crimson-hover: #be123c;
+    --color-success: #10b981;
+    --color-warning: #f59e0b;
+    --color-danger: #ef4444;
+    --color-info: #3b82f6;
+    --border-subtle: #334155;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.5;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Thanh Header đỉnh (Top Header) */
+.top-header {
+    background: linear-gradient(90deg, #0b1120 0%, #1e1b4b 55%, #31102f 100%);
+    border-bottom: 1px solid var(--border-subtle);
+    padding: 0.85rem 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 30;
+}
+
+.brand-area {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.brand-logo {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent-crimson), var(--accent-gold));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.2rem;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(225, 29, 72, 0.35);
+}
+
+.brand-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.brand-subtitle {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+}
+
+.main-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+.nav-tab {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-secondary);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 0.5rem 0.9rem;
+    border-radius: 8px;
+    font-size: 0.86rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+
+.nav-tab:hover {
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+}
+
+.nav-tab.active {
+    background: var(--accent-crimson);
+    border-color: var(--accent-crimson);
+    color: #fff;
+    box-shadow: 0 2px 10px rgba(225, 29, 72, 0.4);
+}
+
+.user-panel {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.user-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: rgba(15, 23, 42, 0.75);
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    border: 1px solid var(--border-subtle);
+    font-size: 0.84rem;
+}
+
+.role-pill {
+    background: var(--accent-gold);
+    color: #0f172a;
+    font-weight: 700;
+    font-size: 0.72rem;
+    padding: 0.12rem 0.48rem;
+    border-radius: 999px;
+}
+
+.quick-role-switcher {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.btn-chip {
+    background: var(--bg-surface);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-subtle);
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.76rem;
+    cursor: pointer;
+}
+
+.btn-chip.active,
+.btn-chip:hover {
+    border-color: var(--accent-gold);
+    color: var(--accent-gold);
+}
+
+/* Thông báo toàn cục */
+.global-banner {
+    margin: 0.75rem 1.5rem 0;
+    padding: 0.8rem 1.2rem;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 0.92rem;
+    border-left: 5px solid var(--color-info);
+    background: #1e293b;
+}
+
+.global-banner.success {
+    border-left-color: var(--color-success);
+    background: rgba(16, 185, 129, 0.15);
+    color: #a7f3d0;
+}
+
+.global-banner.error {
+    border-left-color: var(--color-danger);
+    background: rgba(239, 68, 68, 0.18);
+    color: #fecaca;
+}
+
+/* Không gian làm việc chính */
+.workspace-container {
+    flex: 1;
+    max-width: 1440px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 1.25rem 1.5rem 2.5rem;
+}
+
+.tab-panel {
+    display: none;
+}
+
+.tab-panel.active {
+    display: block;
+}
+
+.section-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.section-header h2 {
+    font-size: 1.35rem;
+    color: #fff;
+}
+
+.section-desc {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-top: 0.25rem;
+}
+
+/* Tìm kiếm phim (<search>) */
+.inline-search-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.65rem;
+}
+
+.field-group-inline {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.field-group-inline label {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+/* Lưới thẻ phim */
+.movie-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.movie-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 0.65rem;
+    cursor: pointer;
+    transition: transform 0.16s ease, border-color 0.16s ease;
+}
+
+.movie-card:hover,
+.movie-card.active {
+    transform: translateY(-2px);
+    border-color: var(--accent-gold);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+.movie-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.age-badge {
+    background: var(--accent-crimson);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 0.15rem 0.5rem;
+    border-radius: 5px;
+}
+
+.age-badge.P {
+    background: var(--color-success);
+}
+
+.age-badge.T13 {
+    background: var(--color-info);
+}
+
+.movie-card h3 {
+    font-size: 1rem;
+    color: #fff;
+    line-height: 1.35;
+}
+
+.movie-meta {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* Bố cục Đặt vé & Sơ đồ ghế */
+.booking-workspace {
+    display: grid;
+    grid-template-columns: 1.55fr 1fr;
+    gap: 1.25rem;
+    align-items: start;
+}
+
+@media (max-width: 1024px) {
+    .booking-workspace,
+    .grid-2col {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+.card-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+}
+
+.card-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.hold-timer-badge {
+    background: rgba(245, 158, 11, 0.18);
+    border: 1px solid var(--accent-gold);
+    color: var(--accent-gold);
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+}
+
+.showtime-pills-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-bottom: 1.25rem;
+}
+
+.showtime-pill {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+    padding: 0.55rem 0.85rem;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: left;
+    font-size: 0.83rem;
+}
+
+.showtime-pill.active {
+    background: rgba(225, 29, 72, 0.22);
+    border-color: var(--accent-crimson);
+}
+
+.showtime-pill strong {
+    display: block;
+    color: var(--accent-gold);
+    font-size: 0.95rem;
+}
+
+/* Màn hình chiếu phim và Sơ đồ ghế */
+.cinema-screen-wrap {
+    margin: 0.75rem 0 1.25rem;
+    text-align: center;
+}
+
+.cinema-screen-arc {
+    background: linear-gradient(180deg, rgba(56, 189, 248, 0.35), rgba(15, 23, 42, 0.05));
+    border-top: 4px solid #38bdf8;
+    border-radius: 50% 50% 0 0 / 18px 18px 0 0;
+    padding: 0.55rem 1rem;
+    font-size: 0.78rem;
+    letter-spacing: 0.18em;
+    color: #bae6fd;
+    font-weight: 700;
+}
+
+.seat-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.9rem;
+    margin-bottom: 1rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.seat-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.seat-dot.std { background: #334155; border: 1px solid #64748b; }
+.seat-dot.vip { background: #1e3a8a; border: 1px solid #60a5fa; }
+.seat-dot.couple { background: #701a75; border: 1px solid #f472b6; }
+.seat-dot.selected { background: var(--color-success); }
+.seat-dot.held { background: var(--accent-gold); }
+.seat-dot.booked { background: #475569; opacity: 0.45; }
+
+.seat-grid-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    align-items: center;
+    overflow-x: auto;
+    padding: 0.5rem 0;
+}
+
+.seat-row {
+    display: flex;
+    align-items: center;
+    gap: 0.38rem;
+}
+
+.row-label-tag {
+    width: 24px;
+    text-align: center;
+    font-weight: 700;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+}
+
+.seat-btn {
+    min-width: 40px;
+    height: 36px;
+    border-radius: 6px 6px 3px 3px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1px solid #64748b;
+    background: #334155;
+    color: #f8fafc;
+    transition: all 0.12s ease;
+}
+
+.seat-btn.tier-VIP {
+    background: #1e3a8a;
+    border-color: #60a5fa;
+}
+
+.seat-btn.tier-COUPLE {
+    background: #701a75;
+    border-color: #f472b6;
+    min-width: 48px;
+}
+
+.seat-btn.selected {
+    background: var(--color-success) !important;
+    border-color: #6ee7b7 !important;
+    color: #052e16 !important;
+    transform: scale(1.06);
+}
+
+.seat-btn.state-HELD {
+    background: rgba(245, 158, 11, 0.35);
+    border-color: var(--accent-gold);
+    color: #fde68a;
+}
+
+.seat-btn.state-BOOKED {
+    background: #1e293b;
+    border-color: #334155;
+    color: #475569;
+    cursor: not-allowed;
+    text-decoration: line-through;
+}
+
+/* Giỏ hàng & Biểu mẫu chuẩn Modern Web Guidance */
+.summary-block,
+.total-Summary-box {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 0.85rem 1rem;
+    margin: 0.75rem 0;
+}
+
+.summary-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.35rem;
+    font-size: 0.9rem;
+}
+
+.summary-line.grand-total {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px dashed var(--border-subtle);
+    font-size: 1.05rem;
+    color: var(--accent-gold);
+}
+
+.highlight-text {
+    color: var(--accent-gold);
+}
+
+.booking-combo-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 220px;
+    overflow-y: auto;
+    margin: 0.65rem 0;
+}
+
+.combo-pick-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-subtle);
+    padding: 0.55rem 0.75rem;
+    border-radius: 8px;
+}
+
+.combo-pick-info strong {
+    display: block;
+    font-size: 0.86rem;
+}
+
+.combo-pick-info span {
+    font-size: 0.76rem;
+    color: var(--text-muted);
+}
+
+.combo-qty-input {
+    width: 64px;
+    text-align: center;
+}
+
+/* Biểu mẫu & Validate Input After Interaction */
+.form-field {
+    margin-bottom: 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.form-field label {
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: var(--text-primary);
+}
+
+.field-hint {
+    font-size: 0.77rem;
+    color: var(--text-muted);
+}
+
+input[type="text"],
+input[type="tel"],
+input[type="number"],
+input[type="password"],
+input[type="search"],
+select {
+    background: var(--bg-input);
+    color: var(--text-primary);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.9rem;
+    outline: none;
+}
+
+input:focus,
+select:focus {
+    border-color: var(--accent-gold);
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
+}
+
+/* Modern Web Guidance: validate-input-after-interaction */
+.error-msg {
+    display: none;
+    color: #fca5a5;
+    font-size: 0.8rem;
+    margin-top: 0.2rem;
+}
+
+input:is(:user-invalid, .user-invalid-fallback),
+select:is(:user-invalid, .user-invalid-fallback),
+textarea:is(:user-invalid, .user-invalid-fallback) {
+    border-color: #d93025;
+    outline-color: #d93025;
+}
+
+:is(:user-invalid, .user-invalid-fallback) + .error-msg {
+    display: block;
+}
+
+/* Các nút bấm */
+.btn-primary,
+.btn-secondary,
+.btn-outline-sm,
+.btn-danger-outline {
+    border-radius: 8px;
+    padding: 0.6rem 1.05rem;
+    font-weight: 600;
+    font-size: 0.88rem;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s ease;
+}
+
+.btn-primary {
+    background: var(--accent-crimson);
+    color: #fff;
+}
+
+.btn-primary:hover {
+    background: var(--accent-crimson-hover);
+}
+
+.btn-secondary {
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    border-color: var(--border-subtle);
+}
+
+.btn-secondary:hover {
+    border-color: var(--accent-gold);
+}
+
+.btn-danger-outline {
+    background: rgba(239, 68, 68, 0.12);
+    color: #fca5a5;
+    border-color: var(--color-danger);
+}
+
+.btn-outline-sm {
+    background: transparent;
+    color: var(--text-primary);
+    border-color: var(--border-subtle);
+    padding: 0.32rem 0.7rem;
+    font-size: 0.8rem;
+}
+
+.full-width {
+    width: 100%;
+}
+
+.btn-lg {
+    padding: 0.78rem 1.2rem;
+    font-size: 0.96rem;
+}
+
+.action-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    margin-top: 0.5rem;
+}
+
+.grid-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+}
+
+.form-row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.85rem;
+}
+
+.form-row-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.mt-lg {
+    margin-top: 1.25rem;
+}
+
+.divider {
+    border: none;
+    border-top: 1px solid var(--border-subtle);
+    margin: 0.95rem 0;
+}
+
+/* KPI Cards (CSD05) */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+}
+
+.kpi-card {
+    background: linear-gradient(145deg, #1e293b, #0f172a);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.kpi-label {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+}
+
+.kpi-value {
+    font-size: 1.55rem;
+    color: var(--accent-gold);
+}
+
+.kpi-sub {
+    font-size: 0.76rem;
+    color: var(--text-muted);
+}
+
+.checkin-result-box {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-subtle);
+}
+
+.checkin-result-box.valid {
+    border-color: var(--color-success);
+    background: rgba(16, 185, 129, 0.14);
+}
+
+.checkin-result-box.invalid {
+    border-color: var(--color-danger);
+    background: rgba(239, 68, 68, 0.15);
+}
+
+/* =============================================================================
+ * MODERN WEB GUIDANCE: RESPONSIVE DATA TABLES (@container & Sticky Headers)
+ * ============================================================================= */
+.table-wrapper {
+    container-type: inline-size;
+    overflow-x: auto;
+    max-block-size: 65vh;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    margin-top: 0.75rem;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.87rem;
+}
+
+.data-table th,
+.data-table td {
+    padding: 0.68rem 0.85rem;
+    border-bottom: 1px solid var(--border-subtle);
+    text-align: left;
+}
+
+.data-table thead th {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 2;
+    background: #0f172a;
+    color: var(--accent-gold);
+    font-weight: 700;
+}
+
+.data-table tbody th {
+    position: sticky;
+    inset-inline-start: 0;
+    z-index: 1;
+    background: var(--bg-card);
+    font-weight: 600;
+}
+
+.num-col {
+    text-align: right !important;
+    font-variant-numeric: tabular-nums;
+}
+
+.showtimes-table {
+    --label-1: "Tên Bộ Phim";
+    --label-2: "Phòng Chiếu";
+    --label-3: "Bắt Đầu Chiếu";
+    --label-4: "Kết Thúc (+15p VS)";
+    --label-5: "Giá Cơ Sở";
+    --label-6: "Ghế Trống";
+}
+
+.combos-table {
+    --label-1: "Tên Combo";
+    --label-2: "Đơn Giá";
+    --label-3: "Tồn Kho";
+    --label-4: "Trạng Thái";
+    --label-5: "Thao Tác";
+}
+
+.movie-rev-table {
+    --label-1: "Số Suất Chiếu";
+    --label-2: "Vé Đã Bán";
+    --label-3: "Tổng Doanh Thu";
+}
+
+.tickets-table {
+    --label-1: "Khách Hàng";
+    --label-2: "Bộ Phim & Phòng";
+    --label-3: "Ghế & Hạng";
+    --label-4: "Giá Vé";
+    --label-5: "Trạng Thái Vé";
+    --label-6: "Thao Tác";
+}
+
+@container (width < 600px) {
+    .data-table thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+
+    .data-table tr,
+    .data-table th,
+    .data-table td {
+        display: block;
+    }
+
+    .data-table tbody th {
+        position: static;
+    }
+
+    .data-table td {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .data-table td::before {
+        font-weight: 600;
+        text-align: start;
+        color: var(--text-secondary);
+    }
+
+    .data-table td:nth-of-type(1)::before { content: var(--label-1); }
+    .data-table td:nth-of-type(2)::before { content: var(--label-2); }
+    .data-table td:nth-of-type(3)::before { content: var(--label-3); }
+    .data-table td:nth-of-type(4)::before { content: var(--label-4); }
+    .data-table td:nth-of-type(5)::before { content: var(--label-5); }
+    .data-table td:nth-of-type(6)::before { content: var(--label-6); }
+}
+
+/* =============================================================================
+ * MODERN WEB GUIDANCE: NATIVE <dialog> MODAL STYLING
+ * ============================================================================= */
+dialog {
+    margin: auto;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border: 1px solid var(--accent-gold);
+    border-radius: var(--radius-lg);
+    padding: 0;
+    max-width: 640px;
+    width: calc(100% - 2rem);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+}
+
+dialog:modal {
+    overscroll-behavior: contain;
+}
+
+dialog::backdrop {
+    background: rgba(2, 6, 23, 0.78);
+    backdrop-filter: blur(4px);
+    overflow: hidden;
+    overscroll-behavior: contain;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.modal-body {
+    padding: 1.25rem;
+    max-height: 72vh;
+    overflow-y: auto;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.65rem;
+    padding: 0.9rem 1.25rem;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.btn-close-modal {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+.qr-ticket-card {
+    background: #0f172a;
+    border: 1px dashed var(--accent-gold);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 0.85rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.qr-visual-box {
+    background: #fff;
+    color: #0f172a;
+    padding: 0.5rem;
+    border-radius: 8px;
+    font-family: monospace;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-align: center;
+    min-width: 110px;
+}
+
+.main-footer {
+    margin-top: auto;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border-subtle);
+    background: #090e1a;
+    text-align: center;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+

@@ -1,0 +1,26 @@
+# =============================================================================
+# CINEHUB CMS - MẪU CẤU HÌNH KẾT NỐI CƠ SỞ DỮ LIỆU (db.properties.example)
+# Sao chép tập tin này thành config/db.properties để tùy chỉnh môi trường
+# =============================================================================
+
+# Chế độ mặc định: H2 Database nhúng tương thích MySQL (chạy ngay không cần cài đặt MySQL)
+db.driver=org.h2.Driver
+db.url=jdbc:h2:./data/cinehub_db;MODE=MySQL;DATABASE_TO_LOWER=TRUE;AUTO_SERVER=TRUE
+db.username=sa
+db.password=
+
+# Cấu hình thay thế khi triển khai trên MySQL Server 8.0+:
+# db.driver=com.mysql.cj.jdbc.Driver
+# db.url=jdbc:mysql://localhost:3306/cinehub_db?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true
+# db.username=root
+# db.password=your_secret_password
+
+# Cổng HTTP Server của ứng dụng Web MVC
+server.port=8080
+
+# Thời gian giữ ghế tạm thời (BR03 - tính bằng phút)
+booking.hold.minutes=5
+
+# Thời gian đệm dọn vệ sinh phòng chiếu giữa 2 suất chiếu (BR01 - tính bằng phút)
+showtime.cleaning.buffer.minutes=15
+

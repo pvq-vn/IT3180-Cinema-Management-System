@@ -2,9 +2,648 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>CineHub - Trang chủ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CineHub CMS - Hệ thống Quản lý &amp; Đặt vé Rạp chiếu phim (IT3180 - Nhóm 3)</title>
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-    <h1>Chào mừng đến với Hệ thống Rạp chiếu phim CineHub</h1>
+    <!-- Thanh điều hướng đỉnh (Top Header Navigation - Chuẩn thiết kế giao diện Chương 7) -->
+    <header class="top-header">
+        <div class="brand-area">
+            <div class="brand-logo" aria-hidden="true">CH</div>
+            <div>
+                <h1 class="brand-title">CineHub Cinema CMS</h1>
+                <p class="brand-subtitle">Hệ thống Website Quản lý &amp; Đặt vé Rạp chiếu phim — IT3180 Nhóm 3 (HUST)</p>
+            </div>
+        </div>
+
+        <nav class="main-nav" aria-label="Điều hướng phân hệ nghiệp vụ">
+            <button type="button" class="nav-tab active" data-tab="tab-booking">
+                1. Đặt vé Online (CSD01)
+            </button>
+            <button type="button" class="nav-tab" data-tab="tab-pos">
+                2. Bán vé Quầy POS (CSD02)
+            </button>
+            <button type="button" class="nav-tab" data-tab="tab-schedule">
+                3. Phim &amp; Lịch chiếu (CSD03)
+            </button>
+            <button type="button" class="nav-tab" data-tab="tab-combo">
+                4. Quản lý F&amp;B Combo (CSD04)
+            </button>
+            <button type="button" class="nav-tab" data-tab="tab-checkin">
+                5. Soát vé QR &amp; Doanh thu (CSD05)
+            </button>
+        </nav>
+
+        <div class="user-panel">
+            <div class="user-badge" id="current-user-badge">
+                <span class="role-pill" id="current-role-pill">MANAGER</span>
+                <span id="current-user-name">Phạm Văn Quyết (Quản lý)</span>
+            </div>
+            <div class="quick-role-switcher" aria-label="Chuyển nhanh tài khoản kiểm thử">
+                <button type="button" class="btn-chip" data-quick-login="customer:khach123" title="Khách hàng Vũ Việt Tiến">Khách hàng</button>
+                <button type="button" class="btn-chip" data-quick-login="staff:staff123" title="Nhân viên Lê Anh Tuấn">NV POS/QR</button>
+                <button type="button" class="btn-chip active" data-quick-login="admin:admin123" title="Quản lý Phạm Văn Quyết">Quản lý</button>
+                <button type="button" class="btn-outline-sm" id="btn-open-login">Đăng nhập</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Thông báo trạng thái toàn cục (Toast Banner) -->
+    <div id="global-banner" class="global-banner" role="status" aria-live="polite" hidden></div>
+
+    <main class="workspace-container">
+        <!-- =========================================================================
+             PHÂN HỆ 1: ĐẶT VÉ XEM PHIM TRỰC TUYẾN & SƠ ĐỒ GHẾ THỜI GIAN THỰC (CSD01)
+             ========================================================================= -->
+        <section id="tab-booking" class="tab-panel active" aria-labelledby="heading-csd01">
+            <div class="section-header">
+                <div>
+                    <h2 id="heading-csd01">Phân hệ CSD01: Đặt Vé Xem Phim Trực Tuyến &amp; Giữ Ghế Thời Gian Thực</h2>
+                    <p class="section-desc">
+                        Thực thi quy tắc <strong>BR02</strong> (Tách ghế vật lý &amp; ghế theo suất chiếu),
+                        <strong>BR03</strong> (Giữ ghế tạm thời 5 phút chống đặt trùng <strong>R01</strong>),
+                        và <strong>BR05</strong> (Đa hình giá ghế Standard / VIP +20.000đ / Couple 2.2x + Combo F&amp;B).
+                    </p>
+                </div>
+                <search class="filter-bar" aria-label="Tìm kiếm và lọc phim chiếu rạp">
+                    <form id="movie-search-form" class="inline-search-form" novalidate>
+                        <div class="field-group-inline">
+                            <label for="search-movie-kw">Tìm tên phim / đạo diễn</label>
+                            <input type="search" id="search-movie-kw" name="keyword" placeholder="Nhập tên phim (VD: Địa Đạo, Lật Mặt)...">
+                        </div>
+                        <div class="field-group-inline">
+                            <label for="filter-movie-status">Trạng thái chiếu</label>
+                            <select id="filter-movie-status" name="status">
+                                <option value="ALL">Tất cả trạng thái</option>
+                                <option value="SHOWING" selected>Đang khởi chiếu (SHOWING)</option>
+                                <option value="COMING_SOON">Sắp chiếu (COMING_SOON)</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn-primary">Lọc phim</button>
+                    </form>
+                </search>
+            </div>
+
+            <!-- Danh sách thẻ phim -->
+            <div id="movie-cards-grid" class="movie-cards-grid" aria-label="Danh sách phim đang chiếu"></div>
+
+            <!-- Khu vực chọn suất chiếu, sơ đồ ghế và thanh toán -->
+            <div class="booking-workspace">
+                <div class="seatmap-column card-box">
+                    <div class="card-header-row">
+                        <div>
+                            <h3 id="selected-movie-heading">Chọn Suất Chiếu &amp; Sơ Đồ Ghế Phòng Chiếu</h3>
+                            <p id="selected-showtime-meta" class="muted-text">Vui lòng chọn một suất chiếu bên dưới để tải sơ đồ ghế trực tiếp.</p>
+                        </div>
+                        <div id="hold-timer-badge" class="hold-timer-badge" hidden>
+                            <span>Thời gian giữ ghế (BR03):</span>
+                            <strong id="hold-countdown-text">05:00</strong>
+                        </div>
+                    </div>
+
+                    <!-- Các nút chọn suất chiếu -->
+                    <div id="showtime-pills-container" class="showtime-pills-container" role="group" aria-label="Danh sách suất chiếu khả dụng"></div>
+
+                    <!-- Màn hình cong rạp chiếu -->
+                    <div class="cinema-screen-wrap">
+                        <div class="cinema-screen-arc">MÀN HÌNH CHIẾU PHIM IMAX / DOLBY ATMOS</div>
+                    </div>
+
+                    <!-- Chú thích trạng thái ghế & hạng ghế -->
+                    <div class="seat-legend">
+                        <span class="legend-item"><i class="seat-dot std"></i> Ghế Thường (Giá gốc)</span>
+                        <span class="legend-item"><i class="seat-dot vip"></i> Ghế VIP (+20.000đ)</span>
+                        <span class="legend-item"><i class="seat-dot couple"></i> Ghế Đôi Sweetbox (2.2x)</span>
+                        <span class="legend-item"><i class="seat-dot selected"></i> Đang chọn</span>
+                        <span class="legend-item"><i class="seat-dot held"></i> Đang giữ tạm 5p (HELD)</span>
+                        <span class="legend-item"><i class="seat-dot booked"></i> Đã bán (BOOKED)</span>
+                    </div>
+
+                    <!-- Lưới sơ đồ ghế -->
+                    <div id="seat-grid-container" class="seat-grid-container" aria-live="polite"></div>
+                </div>
+
+                <!-- Cột giỏ hàng, chọn Combo F&B & Thanh toán -->
+                <div class="checkout-column card-box">
+                    <h3>Giỏ Hàng Đặt Vé &amp; Combo F&amp;B (BR04, BR05)</h3>
+                    <div class="summary-block">
+                        <div class="summary-line">
+                            <span>Suất chiếu:</span>
+                            <strong id="cart-showtime-label">Chưa chọn</strong>
+                        </div>
+                        <div class="summary-line">
+                            <span>Ghế đang chọn (<span id="cart-seat-count">0</span>):</span>
+                            <strong id="cart-seat-codes" class="highlight-text">Chưa chọn ghế</strong>
+                        </div>
+                        <div class="summary-line">
+                            <span>Tạm tính tiền ghế:</span>
+                            <strong id="cart-seat-subtotal">0 ₫</strong>
+                        </div>
+                    </div>
+
+                    <div class="action-row">
+                        <button type="button" id="btn-hold-seats" class="btn-secondary full-width">
+                            Giữ ghế tạm thời 5 phút (BR03 - Khóa ghế)
+                        </button>
+                    </div>
+
+                    <hr class="divider">
+
+                    <h4>Chọn kèm Đồ ăn &amp; Thức uống (Combo F&amp;B)</h4>
+                    <div id="booking-combo-list" class="booking-combo-list"></div>
+
+                    <hr class="divider">
+
+                    <form id="online-checkout-form" class="validated-form" novalidate>
+                        <div class="form-field">
+                            <label for="cust-name-input">Họ và tên người nhận vé *</label>
+                            <p class="field-hint" id="hint-cust-name">Nhập họ tên đầy đủ để in lên hóa đơn và vé điện tử QR.</p>
+                            <input type="text" id="cust-name-input" name="customerName" required minlength="2"
+                                   value="Vũ Việt Tiến" aria-describedby="hint-cust-name">
+                            <span class="error-msg" id="err-cust-name">Vui lòng nhập họ và tên hợp lệ (tối thiểu 2 ký tự).</span>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="cust-phone-input">Số điện thoại nhận mã vé *</label>
+                            <p class="field-hint" id="hint-cust-phone">Gồm 10 chữ số bắt đầu bằng số 0 (ví dụ: 0987654321).</p>
+                            <input type="tel" id="cust-phone-input" name="customerPhone" required pattern="^0[0-9]{9}$"
+                                   value="0987654321" aria-describedby="hint-cust-phone">
+                            <span class="error-msg" id="err-cust-phone">Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0.</span>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="online-payment-method">Phương thức thanh toán trực tuyến</label>
+                            <select id="online-payment-method" name="paymentMethod">
+                                <option value="VIETQR">Chuyển khoản VietQR Napas 247</option>
+                                <option value="E_WALLET">Ví điện tử MoMo / ZaloPay</option>
+                                <option value="CARD">Thẻ Quốc tế Visa / MasterCard</option>
+                            </select>
+                        </div>
+
+                        <div class="total-Summary-box">
+                            <div class="summary-line">
+                                <span>Tiền vé ghế:</span>
+                                <span id="final-seat-total">0 ₫</span>
+                            </div>
+                            <div class="summary-line">
+                                <span>Tiền Combo F&amp;B:</span>
+                                <span id="final-combo-total">0 ₫</span>
+                            </div>
+                            <div class="summary-line grand-total">
+                                <span>TỔNG THANH TOÁN (BR05):</span>
+                                <strong id="final-grand-total">0 ₫</strong>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-primary full-width btn-lg">
+                            Xác Nhận Thanh Toán &amp; Xuất Vé Điện Tử QR
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- =========================================================================
+             PHÂN HỆ 2: BÁN VÉ TRỰC TIẾP TẠI QUẦY POS (CSD02)
+             ========================================================================= -->
+        <section id="tab-pos" class="tab-panel" aria-labelledby="heading-csd02">
+            <div class="section-header">
+                <div>
+                    <h2 id="heading-csd02">Phân hệ CSD02: Bán Vé Trực Tiếp Tại Quầy POS (Nhân Viên Bán Vé)</h2>
+                    <p class="section-desc">
+                        Giao diện thao tác nhanh dành cho Nhân viên quầy vé hỗ trợ khách vãng lai chọn suất chiếu,
+                        chọn ghế trống, thêm bắp nước, thu tiền mặt/QR tại quầy và xuất vé in ngay.
+                    </p>
+                </div>
+            </div>
+
+            <div class="grid-2col">
+                <div class="card-box">
+                    <h3>Thao Tác Bán Vé Nhanh Tại Quầy (POS Counter)</h3>
+                    <form id="pos-checkout-form" class="validated-form" novalidate>
+                        <div class="form-field">
+                            <label for="pos-showtime-select">1. Chọn Suất Chiếu Khả Dụng *</label>
+                            <select id="pos-showtime-select" required></select>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="pos-seat-select">2. Chọn Ghế Trống Trong Phòng (Giữ Ctrl để chọn nhiều ghế) *</label>
+                            <p class="field-hint" id="hint-pos-seat">Chỉ hiển thị các ghế đang ở trạng thái Trống (AVAILABLE) theo thời gian thực.</p>
+                            <select id="pos-seat-select" multiple size="7" required aria-describedby="hint-pos-seat"></select>
+                            <span class="error-msg" id="err-pos-seat">Nhân viên vui lòng chọn ít nhất 1 ghế trống cho khách.</span>
+                        </div>
+
+                        <div class="form-row-2">
+                            <div class="form-field">
+                                <label for="pos-combo-select">3. Gói Combo F&amp;B Mua Kèm</label>
+                                <select id="pos-combo-select"></select>
+                            </div>
+                            <div class="form-field">
+                                <label for="pos-combo-qty">Số lượng Combo</label>
+                                <input type="number" id="pos-combo-qty" min="0" max="20" value="1">
+                            </div>
+                        </div>
+
+                        <div class="form-row-2">
+                            <div class="form-field">
+                                <label for="pos-customer-name">Tên khách hàng vãng lai *</label>
+                                <input type="text" id="pos-customer-name" required value="Khách vãng lai tại quầy">
+                                <span class="error-msg" id="err-pos-cust">Vui lòng nhập tên hoặc ghi chú khách hàng.</span>
+                            </div>
+                            <div class="form-field">
+                                <label for="pos-payment-method">Hình thức thu tiền tại quầy</label>
+                                <select id="pos-payment-method">
+                                    <option value="CASH">Tiền mặt tại quầy (CASH)</option>
+                                    <option value="VIETQR">Quét mã VietQR tại POS</option>
+                                    <option value="CARD">Quẹt thẻ POS ngân hàng</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-primary full-width btn-lg">
+                            Thu Tiền Tại Quầy &amp; In Vé QR Ngay (POS Checkout)
+                        </button>
+                    </form>
+                </div>
+
+                <div class="card-box">
+                    <h3> Kết Quả Xuất Vé Tại Quầy Gần Nhất</h3>
+                    <div id="pos-latest-receipt" class="pos-receipt-preview">
+                        <p class="muted-text">Chưa có giao dịch POS mới trong phiên hiện tại. Hãy thực hiện bán vé bên trái để in vé.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =========================================================================
+             PHÂN HỆ 3: QUẢN LÝ PHIM, PHÒNG CHIẾU & LỊCH CHIẾU (CSD03 - BR01)
+             ========================================================================= -->
+        <section id="tab-schedule" class="tab-panel" aria-labelledby="heading-csd03">
+            <div class="section-header">
+                <div>
+                    <h2 id="heading-csd03">Phân hệ CSD03: Quản Lý Danh Mục Phim, Phòng Chiếu &amp; Lập Lịch Chiếu (BR01)</h2>
+                    <p class="section-desc">
+                        Hệ thống tự động cộng <strong>15 phút dọn vệ sinh phòng</strong> vào sau thời lượng phim
+                        (<code>end_time = start_time + duration + 15p</code>) và từ chối mọi suất chiếu bị trùng khung giờ trong cùng phòng chiếu.
+                    </p>
+                </div>
+            </div>
+
+            <div class="grid-2col">
+                <!-- Biểu mẫu lập lịch chiếu mới kiểm tra BR01 -->
+                <div class="card-box">
+                    <h3>Lập Suất Chiếu Mới (Kiểm tra chống trùng giờ BR01)</h3>
+                    <form id="create-showtime-form" class="validated-form" novalidate>
+                        <div class="form-field">
+                            <label for="sched-movie-id">Chọn Bộ Phim Công Chiếu *</label>
+                            <select id="sched-movie-id" required></select>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="sched-auditorium-id">Chọn Phòng Chiếu *</label>
+                            <select id="sched-auditorium-id" required></select>
+                        </div>
+
+                        <div class="form-row-2">
+                            <div class="form-field">
+                                <label for="sched-start-time">Thời điểm bắt đầu chiếu *</label>
+                                <p class="field-hint" id="hint-sched-time">Định dạng YYYY-MM-DD HH:mm:ss</p>
+                                <input type="text" id="sched-start-time" required
+                                       placeholder="2026-05-20 21:30:00" aria-describedby="hint-sched-time">
+                                <span class="error-msg" id="err-sched-time">Vui lòng nhập thời gian bắt đầu chiếu hợp lệ.</span>
+                            </div>
+                            <div class="form-field">
+                                <label for="sched-base-price">Giá vé cơ sở (VNĐ) *</label>
+                                <p class="field-hint" id="hint-sched-price">Tối thiểu 45.000 VNĐ</p>
+                                <input type="number" id="sched-base-price" required min="45000" step="5000"
+                                       value="95000" aria-describedby="hint-sched-price">
+                                <span class="error-msg" id="err-sched-price">Giá vé cơ sở phải từ 45.000 VNĐ trở lên.</span>
+                            </div>
+                        </div>
+
+                        <div class="action-row">
+                            <button type="submit" class="btn-primary">Tạo Suất Chiếu &amp; Khởi Tạo Sơ Đồ Ghế</button>
+                            <button type="button" id="btn-test-br01-conflict" class="btn-danger-outline">
+                                Thử tạo lịch trùng giờ (Kiểm chứng BR01)
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Biểu mẫu thêm mới Phim -->
+                <div class="card-box">
+                    <h3>Thêm Mới / Cập Nhật Danh Mục Phim</h3>
+                    <form id="save-movie-form" class="validated-form" novalidate>
+                        <div class="form-row-2">
+                            <div class="form-field">
+                                <label for="movie-title-input">Tên bộ phim *</label>
+                                <input type="text" id="movie-title-input" required minlength="2" placeholder="VD: Mưa Đỏ">
+                                <span class="error-msg" id="err-movie-title">Tên bộ phim không được để trống.</span>
+                            </div>
+                            <div class="form-field">
+                                <label for="movie-genre-input">Thể loại phim *</label>
+                                <input type="text" id="movie-genre-input" required value="Hành động / Lịch sử">
+                                <span class="error-msg" id="err-movie-genre">Vui lòng nhập thể loại phim.</span>
+                            </div>
+                        </div>
+
+                        <div class="form-row-3">
+                            <div class="form-field">
+                                <label for="movie-duration-input">Thời lượng (phút) *</label>
+                                <input type="number" id="movie-duration-input" required min="45" max="300" value="125">
+                                <span class="error-msg" id="err-movie-dur">Thời lượng từ 45 đến 300 phút.</span>
+                            </div>
+                            <div class="form-field">
+                                <label for="movie-rating-input">Độ tuổi</label>
+                                <select id="movie-rating-input">
+                                    <option value="P">P - Mọi lứa tuổi</option>
+                                    <option value="T13">T13 - Từ 13 tuổi</option>
+                                    <option value="T16" selected>T16 - Từ 16 tuổi</option>
+                                    <option value="T18">T18 - Từ 18 tuổi</option>
+                                </select>
+                            </div>
+                            <div class="form-field">
+                                <label for="movie-status-input">Trạng thái</label>
+                                <select id="movie-status-input">
+                                    <option value="SHOWING">Đang chiếu (SHOWING)</option>
+                                    <option value="COMING_SOON">Sắp chiếu (COMING_SOON)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row-2">
+                            <div class="form-field">
+                                <label for="movie-director-input">Đạo diễn</label>
+                                <input type="text" id="movie-director-input" value="Đặng Thái Huyền">
+                            </div>
+                            <div class="form-field">
+                                <label for="movie-cast-input">Diễn viên chính</label>
+                                <input type="text" id="movie-cast-input" value="Đỗ Nhật Hoàng, Hạ Anh">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-primary">Lưu Phim Vào Hệ Thống</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Bảng danh sách lịch chiếu chuẩn Responsive Table -->
+            <div class="card-box mt-lg">
+                <h3 id="table-showtimes-title">Bảng Lịch Chiếu Toàn Rạp &amp; Thời Gian Khóa Phòng (BR01)</h3>
+                <div tabindex="0" role="region" aria-labelledby="table-showtimes-title" class="table-wrapper">
+                    <table class="data-table showtimes-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Mã SC</th>
+                                <th scope="col">Tên Bộ Phim</th>
+                                <th scope="col">Phòng Chiếu</th>
+                                <th scope="col">Bắt Đầu Chiếu</th>
+                                <th scope="col">Kết Thúc (+15p VS)</th>
+                                <th scope="col" class="num-col">Giá Cơ Sở</th>
+                                <th scope="col" class="num-col">Ghế Trống</th>
+                            </tr>
+                        </thead>
+                        <tbody id="showtimes-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- =========================================================================
+             PHÂN HỆ 4: QUẢN LÝ ĐỒ ĂN, THỨC UỐNG & COMBO F&B (CSD04)
+             ========================================================================= -->
+        <section id="tab-combo" class="tab-panel" aria-labelledby="heading-csd04">
+            <div class="section-header">
+                <div>
+                    <h2 id="heading-csd04">Phân hệ CSD04: Quản Lý Đồ Ăn, Thức Uống &amp; Combo F&amp;B</h2>
+                    <p class="section-desc">
+                        Quản lý danh mục sản phẩm F&amp;B, cập nhật đơn giá, tồn kho và khóa mềm trạng thái ngừng kinh doanh
+                        (<code>DISCONTINUED</code>) để bảo toàn lịch sử hóa đơn.
+                    </p>
+                </div>
+            </div>
+
+            <div class="grid-2col">
+                <div class="card-box">
+                    <h3>Thêm Mới / Cập Nhật Gói Combo F&amp;B</h3>
+                    <form id="save-combo-form" class="validated-form" novalidate>
+                        <input type="hidden" id="combo-id-input" value="0">
+                        <div class="form-row-2">
+                            <div class="form-field">
+                                <label for="combo-code-input">Mã Combo *</label>
+                                <input type="text" id="combo-code-input" required placeholder="VD: CB07">
+                                <span class="error-msg" id="err-combo-code">Vui lòng nhập mã Combo.</span>
+                            </div>
+                            <div class="form-field">
+                                <label for="combo-name-input">Tên Gói Combo *</label>
+                                <input type="text" id="combo-name-input" required placeholder="VD: Combo Bắp Phô Mai Đôi">
+                                <span class="error-msg" id="err-combo-name">Vui lòng nhập tên gói Combo.</span>
+                            </div>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="combo-items-input">Thành phần chi tiết *</label>
+                            <input type="text" id="combo-items-input" required value="1 Bắp Phô mai (XL) + 2 Pepsi (L)">
+                            <span class="error-msg" id="err-combo-items">Vui lòng mô tả thành phần của gói Combo.</span>
+                        </div>
+
+                        <div class="form-row-2">
+                            <div class="form-field">
+                                <label for="combo-price-input">Đơn giá bán (VNĐ) *</label>
+                                <input type="number" id="combo-price-input" required min="10000" step="1000" value="125000">
+                                <span class="error-msg" id="err-combo-price">Đơn giá phải lớn hơn 10.000 VNĐ.</span>
+                            </div>
+                            <div class="form-field">
+                                <label for="combo-stock-input">Số lượng tồn kho *</label>
+                                <input type="number" id="combo-stock-input" required min="0" value="100">
+                                <span class="error-msg" id="err-combo-stock">Số lượng tồn kho không hợp lệ.</span>
+                            </div>
+                        </div>
+
+                        <div class="action-row">
+                            <button type="submit" class="btn-primary">Lưu Gói Combo F&amp;B</button>
+                            <button type="button" id="btn-reset-combo-form" class="btn-secondary">Làm mới biểu mẫu</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card-box">
+                    <h3 id="table-combos-title">Danh Mục Combo F&amp;B &amp; Tồn Kho Hiện Tại</h3>
+                    <div tabindex="0" role="region" aria-labelledby="table-combos-title" class="table-wrapper">
+                        <table class="data-table combos-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Mã</th>
+                                    <th scope="col">Tên Combo &amp; Thành Phần</th>
+                                    <th scope="col" class="num-col">Đơn Giá</th>
+                                    <th scope="col" class="num-col">Tồn Kho</th>
+                                    <th scope="col">Trạng Thái</th>
+                                    <th scope="col">Thao Tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="combos-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =========================================================================
+             PHÂN HỆ 5: SOÁT VÉ ĐIỆN TỬ QR & BÁO CÁO DOANH THU (CSD05)
+             ========================================================================= -->
+        <section id="tab-checkin" class="tab-panel" aria-labelledby="heading-csd05">
+            <div class="section-header">
+                <div>
+                    <h2 id="heading-csd05">Phân hệ CSD05: Soát Vé Điện Tử QR Check-in &amp; Báo Cáo Thống Kê Doanh Thu</h2>
+                    <p class="section-desc">
+                        Kiểm tra tính hợp lệ của mã vé QR tại cửa phòng chiếu (chống sử dụng vé giả, vé đã hủy hoặc vé quét trùng lần 2)
+                        và tổng hợp chỉ số KPI doanh thu theo thời gian thực.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Hàng thẻ KPI thống kê doanh thu -->
+            <div class="kpi-grid" aria-label="Chỉ số doanh thu tổng quan">
+                <div class="kpi-card">
+                    <span class="kpi-label">Tổng Doanh Thu Thực Thu (BR05)</span>
+                    <strong class="kpi-value" id="kpi-total-revenue">0 ₫</strong>
+                    <span class="kpi-sub" id="kpi-channel-split">Online: 0 ₫ | POS: 0 ₫</span>
+                </div>
+                <div class="kpi-card">
+                    <span class="kpi-label">Doanh Thu Bán Vé Xem Phim</span>
+                    <strong class="kpi-value" id="kpi-seat-revenue">0 ₫</strong>
+                    <span class="kpi-sub">Đã cộng phụ thu hạng ghế VIP/Couple</span>
+                </div>
+                <div class="kpi-card">
+                    <span class="kpi-label">Doanh Thu Đồ Ăn &amp; Combo F&amp;B</span>
+                    <strong class="kpi-value" id="kpi-combo-revenue">0 ₫</strong>
+                    <span class="kpi-sub">Bắp nước mua kèm trực tuyến &amp; tại quầy</span>
+                </div>
+                <div class="kpi-card">
+                    <span class="kpi-label">Tổng Vé Phát Hành &amp; Soát Vé QR</span>
+                    <strong class="kpi-value" id="kpi-tickets-count">0 vé</strong>
+                    <span class="kpi-sub" id="kpi-checkin-breakdown">Đã Check-in: 0 | Đã hủy: 0</span>
+                </div>
+            </div>
+
+            <div class="grid-2col mt-lg">
+                <!-- Cổng soát vé QR -->
+                <div class="card-box">
+                    <h3>Cổng Soát Vé Điện Tử Bằng Mã QR (QR Gate Check-in)</h3>
+                    <form id="qr-checkin-form" class="validated-form" novalidate>
+                        <div class="form-field">
+                            <label for="qr-code-input">Nhập Mã Vé hoặc Chuỗi Mã QR Quét Được *</label>
+                            <p class="field-hint" id="hint-qr-code">Ví dụ mã vé hợp lệ chưa soát: <code>TKT-002-D04</code> hoặc mã đã soát: <code>TKT-001-C05</code></p>
+                            <input type="text" id="qr-code-input" required placeholder="Nhập mã vé (VD: TKT-002-D04) hoặc chuỗi CINEHUB|QR|..."
+                                   value="TKT-002-D04" aria-describedby="hint-qr-code">
+                            <span class="error-msg" id="err-qr-code">Vui lòng nhập hoặc quét mã vé QR cần kiểm tra.</span>
+                        </div>
+                        <div class="action-row">
+                            <button type="submit" class="btn-primary">Quét &amp; Xác Thực Vé Vào Phòng Chiếu</button>
+                            <button type="button" class="btn-secondary" data-sample-qr="TKT-001-C05">Thử vé đã Check-in (Cảnh báo trùng)</button>
+                        </div>
+                    </form>
+
+                    <div id="checkin-result-box" class="checkin-result-box" aria-live="polite">
+                        <p class="muted-text">Kết quả xác thực vé QR sẽ hiển thị tức thì tại đây.</p>
+                    </div>
+                </div>
+
+                <!-- Bảng phân tích doanh thu theo phim -->
+                <div class="card-box">
+                    <h3 id="table-movie-rev-title">Thống Kê Doanh Thu &amp; Sản Lượng Vé Theo Phim</h3>
+                    <div tabindex="0" role="region" aria-labelledby="table-movie-rev-title" class="table-wrapper">
+                        <table class="data-table movie-rev-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Tên Bộ Phim</th>
+                                    <th scope="col" class="num-col">Số Suất Chiếu</th>
+                                    <th scope="col" class="num-col">Vé Đã Bán</th>
+                                    <th scope="col" class="num-col">Tổng Doanh Thu</th>
+                                </tr>
+                            </thead>
+                            <tbody id="movie-rev-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Danh sách toàn bộ vé điện tử QR để kiểm tra / hủy vé -->
+            <div class="card-box mt-lg">
+                <h3 id="table-tickets-title">Danh Sách Vé Điện Tử QR Đã Phát Hành (Hỗ Trợ Soát Nhanh &amp; Hủy Vé BR04)</h3>
+                <div tabindex="0" role="region" aria-labelledby="table-tickets-title" class="table-wrapper">
+                    <table class="data-table tickets-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Mã Vé</th>
+                                <th scope="col">Khách Hàng</th>
+                                <th scope="col">Bộ Phim &amp; Phòng Chiếu</th>
+                                <th scope="col">Ghế &amp; Hạng</th>
+                                <th scope="col" class="num-col">Giá Vé</th>
+                                <th scope="col">Trạng Thái Vé</th>
+                                <th scope="col">Thao Tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tickets-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- =========================================================================
+         HỘP THOẠI MODAL HIỂN THỊ VÉ ĐIỆN TỬ QR (Chuẩn Native <dialog> HTML)
+         ========================================================================= -->
+    <dialog id="ticket-modal" aria-labelledby="ticket-modal-title">
+        <div class="modal-header">
+            <h2 id="ticket-modal-title">Vé Xem Phim Điện Tử &amp; Mã QR Soát Vé</h2>
+            <button type="button" class="btn-close-modal" id="btn-close-ticket-modal" aria-label="Đóng cửa sổ vé">✕</button>
+        </div>
+        <div class="modal-body" id="ticket-modal-content"></div>
+        <div class="modal-footer">
+            <button type="button" class="btn-primary" id="btn-done-ticket-modal">Hoàn tất &amp; Đóng</button>
+        </div>
+    </dialog>
+
+    <!-- =========================================================================
+         HỘP THOẠI MODAL ĐĂNG NHẬP HỆ THỐNG (Chuẩn Native <dialog> HTML)
+         ========================================================================= -->
+    <dialog id="login-modal" aria-labelledby="login-modal-title">
+        <div class="modal-header">
+            <h2 id="login-modal-title">Đăng Nhập Hệ Thống CineHub CMS</h2>
+            <button type="button" class="btn-close-modal" id="btn-close-login-modal" aria-label="Đóng cửa sổ đăng nhập">✕</button>
+        </div>
+        <div class="modal-body">
+            <form id="login-dialog-form" class="validated-form" novalidate>
+                <div class="form-field">
+                    <label for="login-username-input">Tên đăng nhập *</label>
+                    <p class="field-hint" id="hint-login-user">Tài khoản mẫu: <code>admin</code>, <code>staff</code>, <code>customer</code>, hoặc <code>locked_user</code></p>
+                    <input type="text" id="login-username-input" required value="admin" aria-describedby="hint-login-user">
+                    <span class="error-msg" id="err-login-user">Vui lòng nhập tên đăng nhập.</span>
+                </div>
+                <div class="form-field">
+                    <label for="login-password-input">Mật khẩu *</label>
+                    <p class="field-hint" id="hint-login-pass">Mật khẩu tương ứng: <code>admin123</code>, <code>staff123</code>, <code>khach123</code></p>
+                    <input type="password" id="login-password-input" required value="admin123" aria-describedby="hint-login-pass">
+                    <span class="error-msg" id="err-login-pass">Vui lòng nhập mật khẩu.</span>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" id="btn-cancel-login-modal">Hủy</button>
+                    <button type="submit" class="btn-primary">Xác thực Đăng nhập</button>
+                </div>
+            </form>
+        </div>
+    </dialog>
+
+    <footer class="main-footer">
+        <p>
+            <strong>Đồ án Học phần IT3180 - Nhập môn Công nghệ Phần mềm</strong> |
+            Giảng viên hướng dẫn: <strong>TS. Nguyễn Nhất Hải</strong> |
+            Nhóm 3 (CineHub): Phạm Văn Quyết (202416331), Vũ Việt Tiến (202416362), Hà Sỹ Bách (202416129), Lê Anh Tuấn (202416639), Nguyễn Xuân Hồng Quân (202416321).
+        </p>
+    </footer>
+
+    <script src="/js/app.js"></script>
 </body>
 </html>
