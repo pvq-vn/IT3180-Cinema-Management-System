@@ -17,18 +17,21 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
- * Lớp quản lý kết nối Cơ sở dữ liệu quan hệ (JDBC) và khởi tạo dữ liệu mẫu chuẩn 3NF.
- * Hỗ trợ H2 Database ở chế độ tương thích MySQL (MODE=MySQL) và MySQL Server 8.0+.
+ * Lớp quản lý kết nối Cơ sở dữ liệu quan hệ (JDBC) và khởi tạo 10 bảng cùng dữ liệu mẫu.
+ * Mặc định dùng H2 in-memory ở chế độ tương thích MySQL (dữ liệu mất khi tắt máy chủ).
+ * Có thể đổi sang H2 dạng file (giữ dữ liệu) qua {@code db.url} trong {@code config/db.properties}.
+ * Cấu hình MySQL có trong mẫu nhưng cần tự thêm driver MySQL và chưa được kiểm thử.
  *
  * @author Hà Sỹ Bách (202416129)
- * @version 1.0
+ * @version 1.1
  */
 public final class DatabaseConnection {
 
-    private static final String DEFAULT_URL =
-            "jdbc:h2:mem:cinehub_db;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1";
-    private static final String DEFAULT_USER = "sa";
-    private static final String DEFAULT_PASSWORD = "";
+    private static final String DEFAULT_DRIVER = AppConfig.get("db.driver", "org.h2.Driver");
+    private static final String DEFAULT_URL = AppConfig.get("db.url",
+            "jdbc:h2:mem:cinehub_db;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1");
+    private static final String DEFAULT_USER = AppConfig.get("db.username", "sa");
+    private static final String DEFAULT_PASSWORD = AppConfig.get("db.password", "");
     private static final DateTimeFormatter TS_FMT =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -46,7 +49,7 @@ public final class DatabaseConnection {
      */
     public static synchronized Connection getConnection() throws SQLException {
         try {
-            Class.forName("org.h2.Driver");
+            Class.forName(DEFAULT_DRIVER);
         } catch (ClassNotFoundException ignored) {
             // Driver có thể đã được nạp tự động qua ServiceLoader
         }
@@ -433,15 +436,23 @@ public final class DatabaseConnection {
                 + "CREATE TABLE IF NOT EXISTS seats ("
                 + "seat_id INT AUTO_INCREMENT PRIMARY KEY, auditorium_id INT NOT NULL, "
                 + "row_label VARCHAR(5) NOT NULL, seat_number INT NOT NULL, seat_code VARCHAR(10) NOT NULL, "
-                + "seat_type VARCHAR(20) NOT NULL DEFAULT 'STANDARD', is_active BOOLEAN NOT NULL DEFAULT TRUE);"
+                + "seat_type VARCHAR(20) NOT NULL DEFAULT 'STANDARD', is_active BOOLEAN NOT NULL DEFAULT TRUE, "
+                + "CONSTRAINT fk_seats_auditorium FOREIGN KEY (auditorium_id) REFERENCES auditoriums(auditorium_id), "
+                + "CONSTRAINT uq_auditorium_seat UNIQUE (auditorium_id, seat_code));"
                 + "CREATE TABLE IF NOT EXISTS showtimes ("
                 + "showtime_id INT AUTO_INCREMENT PRIMARY KEY, movie_id INT NOT NULL, auditorium_id INT NOT NULL, "
                 + "start_time TIMESTAMP NOT NULL, end_time TIMESTAMP NOT NULL, base_price DECIMAL(12,2) NOT NULL, "
-                + "status VARCHAR(20) NOT NULL DEFAULT 'SCHEDULED');"
+                + "status VARCHAR(20) NOT NULL DEFAULT 'SCHEDULED', "
+                + "CONSTRAINT fk_showtimes_movie FOREIGN KEY (movie_id) REFERENCES movies(movie_id), "
+                + "CONSTRAINT fk_showtimes_auditorium FOREIGN KEY (auditorium_id) REFERENCES auditoriums(auditorium_id));"
                 + "CREATE TABLE IF NOT EXISTS showtime_seats ("
                 + "showtime_seat_id INT AUTO_INCREMENT PRIMARY KEY, showtime_id INT NOT NULL, seat_id INT NOT NULL, "
                 + "status VARCHAR(20) NOT NULL DEFAULT 'AVAILABLE', held_by_user_id INT NULL, "
-                + "locked_until TIMESTAMP NULL, final_price DECIMAL(12,2) NOT NULL);"
+                + "locked_until TIMESTAMP NULL, final_price DECIMAL(12,2) NOT NULL, "
+                + "CONSTRAINT fk_ss_showtime FOREIGN KEY (showtime_id) REFERENCES showtimes(showtime_id) ON DELETE CASCADE, "
+                + "CONSTRAINT fk_ss_seat FOREIGN KEY (seat_id) REFERENCES seats(seat_id), "
+                + "CONSTRAINT fk_ss_held_by FOREIGN KEY (held_by_user_id) REFERENCES users(user_id), "
+                + "CONSTRAINT uq_showtime_seat UNIQUE (showtime_id, seat_id));"
                 + "CREATE TABLE IF NOT EXISTS combos ("
                 + "combo_id INT AUTO_INCREMENT PRIMARY KEY, combo_code VARCHAR(20) NOT NULL UNIQUE, "
                 + "name VARCHAR(100) NOT NULL, description VARCHAR(255), items_included VARCHAR(255) NOT NULL, "
@@ -454,16 +465,25 @@ public final class DatabaseConnection {
                 + "payment_method VARCHAR(30) NOT NULL DEFAULT 'VIETQR', seat_total DECIMAL(12,2) NOT NULL DEFAULT 0, "
                 + "combo_total DECIMAL(12,2) NOT NULL DEFAULT 0, discount_amount DECIMAL(12,2) NOT NULL DEFAULT 0, "
                 + "total_amount DECIMAL(12,2) NOT NULL DEFAULT 0, combo_summary VARCHAR(255), "
-                + "payment_status VARCHAR(20) NOT NULL DEFAULT 'PAID', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);"
+                + "payment_status VARCHAR(20) NOT NULL DEFAULT 'PAID', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
+                + "CONSTRAINT fk_invoices_showtime FOREIGN KEY (showtime_id) REFERENCES showtimes(showtime_id), "
+                + "CONSTRAINT fk_invoices_user FOREIGN KEY (user_id) REFERENCES users(user_id), "
+                + "CONSTRAINT fk_invoices_staff FOREIGN KEY (staff_id) REFERENCES users(user_id));"
                 + "CREATE TABLE IF NOT EXISTS invoice_combos ("
                 + "invoice_combo_id INT AUTO_INCREMENT PRIMARY KEY, invoice_id INT NOT NULL, combo_id INT NOT NULL, "
-                + "quantity INT NOT NULL, unit_price DECIMAL(12,2) NOT NULL, subtotal DECIMAL(12,2) NOT NULL);"
+                + "quantity INT NOT NULL, unit_price DECIMAL(12,2) NOT NULL, subtotal DECIMAL(12,2) NOT NULL, "
+                + "CONSTRAINT fk_ic_invoice FOREIGN KEY (invoice_id) REFERENCES invoices(invoice_id) ON DELETE CASCADE, "
+                + "CONSTRAINT fk_ic_combo FOREIGN KEY (combo_id) REFERENCES combos(combo_id));"
                 + "CREATE TABLE IF NOT EXISTS tickets ("
                 + "ticket_id INT AUTO_INCREMENT PRIMARY KEY, ticket_code VARCHAR(30) NOT NULL UNIQUE, "
                 + "qr_payload VARCHAR(255) NOT NULL UNIQUE, invoice_id INT NOT NULL, showtime_id INT NOT NULL, "
                 + "showtime_seat_id INT NOT NULL, seat_code VARCHAR(10) NOT NULL, seat_type VARCHAR(20) NOT NULL, "
                 + "ticket_price DECIMAL(12,2) NOT NULL, ticket_status VARCHAR(20) NOT NULL DEFAULT 'ISSUED', "
-                + "checked_in_at TIMESTAMP NULL, checked_in_by INT NULL);";
+                + "checked_in_at TIMESTAMP NULL, checked_in_by INT NULL, "
+                + "CONSTRAINT fk_tickets_invoice FOREIGN KEY (invoice_id) REFERENCES invoices(invoice_id) ON DELETE CASCADE, "
+                + "CONSTRAINT fk_tickets_showtime FOREIGN KEY (showtime_id) REFERENCES showtimes(showtime_id), "
+                + "CONSTRAINT fk_tickets_ss FOREIGN KEY (showtime_seat_id) REFERENCES showtime_seats(showtime_seat_id), "
+                + "CONSTRAINT fk_tickets_checked_by FOREIGN KEY (checked_in_by) REFERENCES users(user_id));";
     }
 
     private static String getFallbackSeedSql() {

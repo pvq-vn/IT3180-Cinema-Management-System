@@ -4,10 +4,11 @@
 -- Tập tin: config/seed_data.sql (Dữ liệu mẫu khởi tạo hệ thống rạp chiếu phim)
 -- =============================================================================
 
--- 1. Tài khoản người dùng (Mật khẩu đã băm SHA-256 kèm salt 'CINEHUB_SALT_2026')
+-- 1. Tài khoản người dùng (mật khẩu mẫu băm SHA-256 KHÔNG salt; hệ thống tự băm lại sang PBKDF2 có salt
+--    ngay lần đăng nhập thành công đầu tiên - xem PasswordUtils/AuthService)
 -- admin / admin123  (Quản lý rạp - Phạm Văn Quyết)
 -- staff / staff123  (Nhân viên bán vé & soát vé - Lê Anh Tuấn)
--- fnb   / staff123  (Nhân viên dịch vụ F&B - Nguyễn Xuân Hồng Quân)
+-- fnb_staff / staff123  (Nhân viên dịch vụ F&B - Nguyễn Xuân Hồng Quân)
 -- customer / khach123 (Khách hàng thành viên - Vũ Việt Tiến)
 -- locked_user / khach123 (Tài khoản bị khóa để kiểm thử luồng thay thế)
 

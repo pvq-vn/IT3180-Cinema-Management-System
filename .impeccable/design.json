@@ -1,0 +1,658 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-14T05:27:15+00:00",
+  "title": "Design System: CineHub CMS",
+  "extensions": {
+    "colorMeta": {
+      "ground": {
+        "role": "neutral",
+        "displayName": "Stone Concourse",
+        "canonical": "oklch(91.1% 0.016 86)",
+        "tonalRamp": [
+          "#0D0B08",
+          "#292621",
+          "#48453E",
+          "#6A665D",
+          "#8D8980",
+          "#B1AEA6",
+          "#D4D1CA",
+          "#F1EEE9"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Ticket Paper",
+        "canonical": "oklch(95.3% 0.013 87)",
+        "tonalRamp": [
+          "#0C0B08",
+          "#282622",
+          "#47453F",
+          "#69665E",
+          "#8C8981",
+          "#B0AEA7",
+          "#D3D1CB",
+          "#F0EEEA"
+        ]
+      },
+      "paper-hi": {
+        "role": "neutral",
+        "displayName": "Bright Paper",
+        "canonical": "oklch(98.2% 0.007 89)",
+        "tonalRamp": [
+          "#0C0B0A",
+          "#272624",
+          "#464542",
+          "#676662",
+          "#8B8985",
+          "#AFAEAA",
+          "#D2D1CE",
+          "#EFEEEC"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "oklch(83.5% 0.021 85)",
+        "tonalRamp": [
+          "#0D0B07",
+          "#29261F",
+          "#49443B",
+          "#6B655A",
+          "#8E887D",
+          "#B2ADA3",
+          "#D5D0C8",
+          "#F2EEE7"
+        ]
+      },
+      "line-soft": {
+        "role": "neutral",
+        "displayName": "Soft Hairline",
+        "canonical": "oklch(88.1% 0.018 85)",
+        "tonalRamp": [
+          "#0D0B07",
+          "#292620",
+          "#48453D",
+          "#6A655C",
+          "#8E897F",
+          "#B2ADA5",
+          "#D4D1C9",
+          "#F1EEE8"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "oklch(23.1% 0.006 271)",
+        "tonalRamp": [
+          "#0B0B0C",
+          "#262628",
+          "#444548",
+          "#656669",
+          "#88898C",
+          "#ADAEB1",
+          "#D0D1D3",
+          "#EEEEF0"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Ink 2",
+        "canonical": "oklch(39.6% 0.013 82)",
+        "tonalRamp": [
+          "#0C0B08",
+          "#282622",
+          "#48453F",
+          "#6A665E",
+          "#8D8982",
+          "#B1ADA7",
+          "#D3D0CB",
+          "#F0EEEA"
+        ]
+      },
+      "ink-3": {
+        "role": "neutral",
+        "displayName": "Ink 3",
+        "canonical": "oklch(48.0% 0.017 85)",
+        "tonalRamp": [
+          "#0D0B07",
+          "#292620",
+          "#48453D",
+          "#6A665C",
+          "#8D897F",
+          "#B2ADA5",
+          "#D4D1CA",
+          "#F1EEE8"
+        ]
+      },
+      "board": {
+        "role": "neutral",
+        "displayName": "Flap Black",
+        "canonical": "oklch(21.3% 0.007 258)",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#252629",
+          "#434548",
+          "#64666A",
+          "#87898D",
+          "#ACAEB1",
+          "#CFD1D4",
+          "#EDEEF1"
+        ]
+      },
+      "board-2": {
+        "role": "neutral",
+        "displayName": "Flap Tile",
+        "canonical": "oklch(27.1% 0.009 256)",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#252729",
+          "#434549",
+          "#63666B",
+          "#86898E",
+          "#ABAEB2",
+          "#CFD1D4",
+          "#EDEFF1"
+        ]
+      },
+      "board-3": {
+        "role": "neutral",
+        "displayName": "Flap Raised",
+        "canonical": "oklch(31.5% 0.011 254)",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#24272A",
+          "#42454A",
+          "#62666C",
+          "#858A8F",
+          "#ABAEB3",
+          "#CED1D5",
+          "#ECEFF2"
+        ]
+      },
+      "board-line": {
+        "role": "neutral",
+        "displayName": "Board Rule",
+        "canonical": "oklch(33.5% 0.010 254)",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#24272A",
+          "#424549",
+          "#62666C",
+          "#858A8F",
+          "#ABAEB3",
+          "#CED1D5",
+          "#ECEFF2"
+        ]
+      },
+      "board-ink": {
+        "role": "neutral",
+        "displayName": "Board Ink",
+        "canonical": "oklch(95.3% 0.013 87)",
+        "tonalRamp": [
+          "#0C0B08",
+          "#282622",
+          "#47453F",
+          "#69665E",
+          "#8C8981",
+          "#B0AEA7",
+          "#D3D1CB",
+          "#F0EEEA"
+        ]
+      },
+      "board-mute": {
+        "role": "neutral",
+        "displayName": "Board Mute",
+        "canonical": "oklch(74.4% 0.009 265)",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#252629",
+          "#434549",
+          "#63666B",
+          "#87898E",
+          "#ACAEB2",
+          "#CFD1D5",
+          "#EDEEF2"
+        ]
+      },
+      "hinge": {
+        "role": "neutral",
+        "displayName": "Hinge",
+        "canonical": "oklch(15.9% 0.005 264)",
+        "tonalRamp": [
+          "#0B0B0C",
+          "#262628",
+          "#444547",
+          "#656669",
+          "#88898C",
+          "#ADAEB0",
+          "#D0D1D3",
+          "#EEEEF0"
+        ]
+      },
+      "signal": {
+        "role": "primary",
+        "displayName": "Signal Yellow",
+        "canonical": "oklch(83.4% 0.158 89)",
+        "tonalRamp": [
+          "#180600",
+          "#3A2100",
+          "#603E00",
+          "#885E00",
+          "#AC8300",
+          "#CCAA4D",
+          "#EACE86",
+          "#FFEDB3"
+        ]
+      },
+      "signal-hover": {
+        "role": "primary",
+        "displayName": "Signal Amber",
+        "canonical": "oklch(78.9% 0.156 87)",
+        "tonalRamp": [
+          "#180600",
+          "#3B2000",
+          "#613D00",
+          "#8A5D00",
+          "#AD8200",
+          "#CEA94F",
+          "#ECCE88",
+          "#FFECB4"
+        ]
+      },
+      "signal-ink": {
+        "role": "primary",
+        "displayName": "Board Ink-Black",
+        "canonical": "oklch(21.3% 0.007 258)",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#252629",
+          "#434548",
+          "#64666A",
+          "#87898D",
+          "#ACAEB1",
+          "#CFD1D4",
+          "#EDEEF1"
+        ]
+      },
+      "ok": {
+        "role": "tertiary",
+        "displayName": "Platform Green",
+        "canonical": "oklch(49.9% 0.103 156)",
+        "tonalRamp": [
+          "#001103",
+          "#003018",
+          "#145232",
+          "#2D764E",
+          "#569A72",
+          "#86BD9A",
+          "#B0DEC0",
+          "#D4F9E1"
+        ]
+      },
+      "warn": {
+        "role": "tertiary",
+        "displayName": "Caution Amber",
+        "canonical": "oklch(70.8% 0.151 65)",
+        "tonalRamp": [
+          "#1E0100",
+          "#451700",
+          "#6F3200",
+          "#9C4F00",
+          "#C07515",
+          "#DF9E5D",
+          "#FBC591",
+          "#FFE5BB"
+        ]
+      },
+      "bad": {
+        "role": "tertiary",
+        "displayName": "Stop Red",
+        "canonical": "oklch(52.2% 0.172 28)",
+        "tonalRamp": [
+          "#250000",
+          "#500001",
+          "#7E1915",
+          "#B0332B",
+          "#D65E52",
+          "#F48D80",
+          "#FFB7AB",
+          "#FFDACF"
+        ]
+      },
+      "ok-soft": {
+        "role": "tertiary",
+        "displayName": "Soft Green",
+        "canonical": "oklch(92.6% 0.023 152)",
+        "tonalRamp": [
+          "#080D09",
+          "#212923",
+          "#3E4840",
+          "#5D6A60",
+          "#818D83",
+          "#A7B1A9",
+          "#CBD4CD",
+          "#E9F1EB"
+        ]
+      },
+      "bad-soft": {
+        "role": "tertiary",
+        "displayName": "Soft Red",
+        "canonical": "oklch(90.6% 0.029 28)",
+        "tonalRamp": [
+          "#110908",
+          "#2F2321",
+          "#51403E",
+          "#75605D",
+          "#998380",
+          "#BCA9A6",
+          "#DDCDCA",
+          "#F8EBE9"
+        ]
+      },
+      "tier-vip": {
+        "role": "secondary",
+        "displayName": "Tier Navy",
+        "canonical": "oklch(35.8% 0.097 266)",
+        "tonalRamp": [
+          "#03091F",
+          "#182545",
+          "#31436E",
+          "#4D649B",
+          "#7088BE",
+          "#98AEDD",
+          "#BFD1F9",
+          "#DFEFFF"
+        ]
+      },
+      "tier-couple": {
+        "role": "secondary",
+        "displayName": "Tier Plum",
+        "canonical": "oklch(43.2% 0.133 337)",
+        "tonalRamp": [
+          "#1A0015",
+          "#3F1236",
+          "#672B5A",
+          "#924681",
+          "#B66CA4",
+          "#D696C5",
+          "#F4BDE5",
+          "#FFDFFF"
+        ]
+      },
+      "seat-line": {
+        "role": "neutral",
+        "displayName": "Seat Stroke",
+        "canonical": "oklch(63.2% 0.020 86)",
+        "tonalRamp": [
+          "#0D0B07",
+          "#29261F",
+          "#49453B",
+          "#6B665A",
+          "#8E897D",
+          "#B2ADA3",
+          "#D4D1C8",
+          "#F1EEE7"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Tab page heading, uppercase; 24px under 640px."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Selected show title above the seat map."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Panel headings, uppercase."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "All UI copy; tabular numerals on globally."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Board column heads, day dividers, KPI labels, table headers, status flaps."
+      },
+      "numeral": {
+        "displayName": "Flap Numeral",
+        "purpose": "Split-flap glyphs: times, counts, totals, countdowns, KPIs (16-42px by context)."
+      },
+      "code": {
+        "displayName": "Code",
+        "purpose": "CSD/BR codes inline after headings and tab labels; never an eyebrow."
+      }
+    },
+    "shadows": [
+      {
+        "name": "shadow-panel",
+        "value": "0 1px 2px rgba(23,25,28,0.06), 0 10px 28px -18px rgba(23,25,28,0.35)",
+        "purpose": "Every paper panel."
+      },
+      {
+        "name": "shadow-board",
+        "value": "0 2px 3px rgba(12,13,15,0.25), 0 18px 40px -22px rgba(12,13,15,0.6)",
+        "purpose": "Boards, ticket stub, toasts."
+      },
+      {
+        "name": "board-bezel",
+        "value": "inset 0 0 0 1px #000, inset 0 0 0 5px #2E3237",
+        "purpose": "Mounted rim on schedule and KPI boards only."
+      },
+      {
+        "name": "shadow-dialog",
+        "value": "0 30px 80px -20px rgba(12,13,15,0.55)",
+        "purpose": "Modal dialogs over an rgba(23,25,28,0.55) backdrop."
+      },
+      {
+        "name": "pay-bar-lift",
+        "value": "0 -12px 16px -12px rgba(0,0,0,0.7)",
+        "purpose": "Pinned pay bar over the scrolling stub body."
+      },
+      {
+        "name": "focus-halo",
+        "value": "outline: 2px solid #17191C; outline-offset: 2px; box-shadow: 0 0 0 5px #F2C230",
+        "purpose": "Global focus-visible; inputs use border #17191C + 0 0 0 3px #F2C230."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "All transitions and the flap."
+      },
+      {
+        "name": "flap-flip",
+        "value": "240ms; rotateX(-88deg) -> 8deg -> 0, brightness 1.6 -> 1; stagger 20ms per changed glyph, capped at 40ms",
+        "purpose": "Split-flap flip on changed glyphs only; disabled under prefers-reduced-motion."
+      },
+      {
+        "name": "state-transition",
+        "value": "120-160ms",
+        "purpose": "Hover and press colour, border and 1px lift on buttons, tabs, seats."
+      },
+      {
+        "name": "enter",
+        "value": "220ms",
+        "purpose": "Toast and dialog entrance (8-10px rise with fade)."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "phone",
+        "value": "639px",
+        "purpose": "max-width: one booking step per screen with bottom step bar."
+      },
+      {
+        "name": "stub-vertical",
+        "value": "720px",
+        "purpose": "max-width: stub returns to vertical; KPIs one column."
+      },
+      {
+        "name": "stacked",
+        "value": "1023px",
+        "purpose": "max-width: all layouts single column."
+      },
+      {
+        "name": "two-column",
+        "value": "1359px",
+        "purpose": "max-width: board | seats over horizontal cart."
+      },
+      {
+        "name": "three-column",
+        "value": "1360px",
+        "purpose": "min-width: board | seats | sticky stub."
+      },
+      {
+        "name": "tabs-wrap",
+        "value": "1499px",
+        "purpose": "max-width: top-bar tabs wrap to a second row."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Signal Button",
+      "kind": "button",
+      "refersTo": "button-signal",
+      "description": "The one primary action per decision (pay, confirm).",
+      "html": "<button class=\"ds-btn ds-btn-signal\">Thanh toán</button>",
+      "css": ":host{--ground:#E6E1D6;--paper:#F3EFE6;--paper-hi:#FBF9F4;--line:#CFC8BA;--line-soft:#DDD7CB;--ink:#1C1D20;--ink-2:#4A463F;--ink-3:#625D53;--board:#17191C;--board-2:#24272B;--board-3:#2E3237;--board-line:#33373C;--board-ink:#F3EFE6;--board-mute:#A9ACB2;--hinge:#0C0D0F;--signal:#F2C230;--signal-hover:#E5B21C;--signal-ink:#17191C;--ok:#23744A;--warn:#E08A1E;--bad:#B8322A;--tier-vip:#24396F;--tier-couple:#7B2D6B;--seat-line:#8F897C;--font-ui:\"Be Vietnam Pro\",\"Segoe UI\",system-ui,sans-serif;--font-board:\"Barlow Condensed\",\"Arial Narrow\",\"Roboto Condensed\",sans-serif;--ease-out:cubic-bezier(0.16,1,0.3,1);} .ds-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 16px;border:1px solid transparent;border-radius:8px;font:600 14px/1.2 var(--font-ui);cursor:pointer;transition:background-color 160ms var(--ease-out),border-color 160ms var(--ease-out),transform 120ms var(--ease-out);} .ds-btn:active{transform:translateY(1px);} .ds-btn:focus-visible{outline:2px solid var(--board);outline-offset:2px;box-shadow:0 0 0 5px var(--signal);} .ds-btn-signal{background:var(--signal);color:var(--signal-ink);border-color:#C99A10;} .ds-btn-signal:hover{background:var(--signal-hover);}"
+    },
+    {
+      "name": "Dark Button",
+      "kind": "button",
+      "refersTo": "button-dark",
+      "description": "Strong secondary action on paper.",
+      "html": "<button class=\"ds-btn ds-btn-dark\">Giữ ghế</button>",
+      "css": ":host{--ground:#E6E1D6;--paper:#F3EFE6;--paper-hi:#FBF9F4;--line:#CFC8BA;--line-soft:#DDD7CB;--ink:#1C1D20;--ink-2:#4A463F;--ink-3:#625D53;--board:#17191C;--board-2:#24272B;--board-3:#2E3237;--board-line:#33373C;--board-ink:#F3EFE6;--board-mute:#A9ACB2;--hinge:#0C0D0F;--signal:#F2C230;--signal-hover:#E5B21C;--signal-ink:#17191C;--ok:#23744A;--warn:#E08A1E;--bad:#B8322A;--tier-vip:#24396F;--tier-couple:#7B2D6B;--seat-line:#8F897C;--font-ui:\"Be Vietnam Pro\",\"Segoe UI\",system-ui,sans-serif;--font-board:\"Barlow Condensed\",\"Arial Narrow\",\"Roboto Condensed\",sans-serif;--ease-out:cubic-bezier(0.16,1,0.3,1);} .ds-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 16px;border:1px solid transparent;border-radius:8px;font:600 14px/1.2 var(--font-ui);cursor:pointer;transition:background-color 160ms var(--ease-out),border-color 160ms var(--ease-out),transform 120ms var(--ease-out);} .ds-btn:active{transform:translateY(1px);} .ds-btn:focus-visible{outline:2px solid var(--board);outline-offset:2px;box-shadow:0 0 0 5px var(--signal);} .ds-btn-dark{background:var(--board);color:var(--board-ink);} .ds-btn-dark:hover{background:var(--board-3);}"
+    },
+    {
+      "name": "Quiet Button",
+      "kind": "button",
+      "refersTo": "button-quiet",
+      "description": "Low-emphasis action on paper.",
+      "html": "<button class=\"ds-btn ds-btn-quiet\">Huỷ</button>",
+      "css": ":host{--ground:#E6E1D6;--paper:#F3EFE6;--paper-hi:#FBF9F4;--line:#CFC8BA;--line-soft:#DDD7CB;--ink:#1C1D20;--ink-2:#4A463F;--ink-3:#625D53;--board:#17191C;--board-2:#24272B;--board-3:#2E3237;--board-line:#33373C;--board-ink:#F3EFE6;--board-mute:#A9ACB2;--hinge:#0C0D0F;--signal:#F2C230;--signal-hover:#E5B21C;--signal-ink:#17191C;--ok:#23744A;--warn:#E08A1E;--bad:#B8322A;--tier-vip:#24396F;--tier-couple:#7B2D6B;--seat-line:#8F897C;--font-ui:\"Be Vietnam Pro\",\"Segoe UI\",system-ui,sans-serif;--font-board:\"Barlow Condensed\",\"Arial Narrow\",\"Roboto Condensed\",sans-serif;--ease-out:cubic-bezier(0.16,1,0.3,1);} .ds-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 16px;border:1px solid transparent;border-radius:8px;font:600 14px/1.2 var(--font-ui);cursor:pointer;transition:background-color 160ms var(--ease-out),border-color 160ms var(--ease-out),transform 120ms var(--ease-out);} .ds-btn:active{transform:translateY(1px);} .ds-btn:focus-visible{outline:2px solid var(--board);outline-offset:2px;box-shadow:0 0 0 5px var(--signal);} .ds-btn-quiet{background:transparent;border-color:var(--line);color:var(--ink);} .ds-btn-quiet:hover{background:var(--paper-hi);border-color:var(--seat-line);}"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Bright paper field with signal focus ring.",
+      "html": "<label class=\"ds-field\"><span>Số điện thoại</span><input class=\"ds-input\" placeholder=\"09xx xxx xxx\"></label>",
+      "css": ":host{--ground:#E6E1D6;--paper:#F3EFE6;--paper-hi:#FBF9F4;--line:#CFC8BA;--line-soft:#DDD7CB;--ink:#1C1D20;--ink-2:#4A463F;--ink-3:#625D53;--board:#17191C;--board-2:#24272B;--board-3:#2E3237;--board-line:#33373C;--board-ink:#F3EFE6;--board-mute:#A9ACB2;--hinge:#0C0D0F;--signal:#F2C230;--signal-hover:#E5B21C;--signal-ink:#17191C;--ok:#23744A;--warn:#E08A1E;--bad:#B8322A;--tier-vip:#24396F;--tier-couple:#7B2D6B;--seat-line:#8F897C;--font-ui:\"Be Vietnam Pro\",\"Segoe UI\",system-ui,sans-serif;--font-board:\"Barlow Condensed\",\"Arial Narrow\",\"Roboto Condensed\",sans-serif;--ease-out:cubic-bezier(0.16,1,0.3,1);} .ds-field{display:flex;flex-direction:column;gap:6px;font:600 13px var(--font-ui);color:var(--ink-2);} .ds-input{min-height:40px;padding:8px 12px;background:var(--paper-hi);border:1px solid var(--line);border-radius:8px;color:var(--ink);font:400 15px var(--font-ui);transition:border-color 160ms var(--ease-out),box-shadow 160ms var(--ease-out);} .ds-input:hover{border-color:var(--seat-line);} .ds-input:focus-visible{outline:none;border-color:var(--board);box-shadow:0 0 0 3px var(--signal);}"
+    },
+    {
+      "name": "Role Tabs",
+      "kind": "nav",
+      "refersTo": "tab",
+      "description": "Top-bar tabs with the subsystem code inline after the label; active tab is Flap Black with a yellow code.",
+      "html": "<nav class=\"ds-tabs\"><button class=\"ds-tab is-on\">Đặt vé <span class=\"ds-code\">CSD01</span></button><button class=\"ds-tab\">Bán tại quầy <span class=\"ds-code\">CSD02</span></button><button class=\"ds-tab\">Phim &amp; lịch chiếu <span class=\"ds-code\">CSD03</span></button></nav>",
+      "css": ":host{--ground:#E6E1D6;--paper:#F3EFE6;--paper-hi:#FBF9F4;--line:#CFC8BA;--line-soft:#DDD7CB;--ink:#1C1D20;--ink-2:#4A463F;--ink-3:#625D53;--board:#17191C;--board-2:#24272B;--board-3:#2E3237;--board-line:#33373C;--board-ink:#F3EFE6;--board-mute:#A9ACB2;--hinge:#0C0D0F;--signal:#F2C230;--signal-hover:#E5B21C;--signal-ink:#17191C;--ok:#23744A;--warn:#E08A1E;--bad:#B8322A;--tier-vip:#24396F;--tier-couple:#7B2D6B;--seat-line:#8F897C;--font-ui:\"Be Vietnam Pro\",\"Segoe UI\",system-ui,sans-serif;--font-board:\"Barlow Condensed\",\"Arial Narrow\",\"Roboto Condensed\",sans-serif;--ease-out:cubic-bezier(0.16,1,0.3,1);} .ds-tabs{display:flex;gap:2px;padding:8px;background:var(--paper);border-bottom:1px solid var(--line);} .ds-tab{padding:8px 12px;border:0;background:transparent;border-radius:8px;color:var(--ink-2);font:500 15px var(--font-ui);cursor:pointer;transition:background-color 160ms var(--ease-out);} .ds-tab:hover{background:var(--line-soft);color:var(--ink);} .ds-tab.is-on{background:var(--board);color:var(--board-ink);} .ds-tab:focus-visible{outline:2px solid var(--board);outline-offset:2px;box-shadow:0 0 0 5px var(--signal);} .ds-code{margin-left:6px;font:600 10px/1 var(--font-board);letter-spacing:0.08em;color:var(--ink-3);} .ds-tab.is-on .ds-code{color:var(--signal);}"
+    },
+    {
+      "name": "Status Flaps",
+      "kind": "chip",
+      "refersTo": "status-ok",
+      "description": "Colour only where it means on sale / few left / sold out.",
+      "html": "<div class=\"ds-row\"><span class=\"ds-status ds-ok\">Đang bán</span><span class=\"ds-status ds-low\">Sắp hết</span><span class=\"ds-status ds-out\">Hết vé</span></div>",
+      "css": ":host{--ground:#E6E1D6;--paper:#F3EFE6;--paper-hi:#FBF9F4;--line:#CFC8BA;--line-soft:#DDD7CB;--ink:#1C1D20;--ink-2:#4A463F;--ink-3:#625D53;--board:#17191C;--board-2:#24272B;--board-3:#2E3237;--board-line:#33373C;--board-ink:#F3EFE6;--board-mute:#A9ACB2;--hinge:#0C0D0F;--signal:#F2C230;--signal-hover:#E5B21C;--signal-ink:#17191C;--ok:#23744A;--warn:#E08A1E;--bad:#B8322A;--tier-vip:#24396F;--tier-couple:#7B2D6B;--seat-line:#8F897C;--font-ui:\"Be Vietnam Pro\",\"Segoe UI\",system-ui,sans-serif;--font-board:\"Barlow Condensed\",\"Arial Narrow\",\"Roboto Condensed\",sans-serif;--ease-out:cubic-bezier(0.16,1,0.3,1);} .ds-row{display:flex;gap:8px;padding:12px;background:var(--board);border-radius:8px;} .ds-status{display:inline-block;min-width:86px;padding:5px 4px 4px;border-radius:2px;font:700 12px/1 var(--font-board);letter-spacing:0.1em;text-align:center;text-transform:uppercase;} .ds-ok{background:var(--ok);color:#fff;} .ds-low{background:var(--warn);color:var(--signal-ink);} .ds-out{background:var(--bad);color:#fff;}"
+    },
+    {
+      "name": "Paper Panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Default container on the stone concourse; code follows the heading inline.",
+      "html": "<section class=\"ds-panel\"><h2 class=\"ds-panel-h\">Thêm suất chiếu <span class=\"ds-meta\">cách suất trước 15 phút</span></h2><p>Nội dung bảng điều khiển.</p></section>",
+      "css": ":host{--ground:#E6E1D6;--paper:#F3EFE6;--paper-hi:#FBF9F4;--line:#CFC8BA;--line-soft:#DDD7CB;--ink:#1C1D20;--ink-2:#4A463F;--ink-3:#625D53;--board:#17191C;--board-2:#24272B;--board-3:#2E3237;--board-line:#33373C;--board-ink:#F3EFE6;--board-mute:#A9ACB2;--hinge:#0C0D0F;--signal:#F2C230;--signal-hover:#E5B21C;--signal-ink:#17191C;--ok:#23744A;--warn:#E08A1E;--bad:#B8322A;--tier-vip:#24396F;--tier-couple:#7B2D6B;--seat-line:#8F897C;--font-ui:\"Be Vietnam Pro\",\"Segoe UI\",system-ui,sans-serif;--font-board:\"Barlow Condensed\",\"Arial Narrow\",\"Roboto Condensed\",sans-serif;--ease-out:cubic-bezier(0.16,1,0.3,1);} .ds-panel{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:20px 22px;box-shadow:0 1px 2px rgba(23,25,28,.06),0 10px 28px -18px rgba(23,25,28,.35);color:var(--ink);font:400 15px/1.5 var(--font-ui);} .ds-panel-h{display:flex;gap:10px;align-items:baseline;margin:0 0 16px;font:700 19px/1.2 var(--font-board);letter-spacing:.04em;text-transform:uppercase;} .ds-meta{font:400 13.5px var(--font-ui);letter-spacing:0;text-transform:none;color:var(--ink-3);} .ds-panel p{margin:0;}"
+    },
+    {
+      "name": "Split-Flap Board Row",
+      "kind": "custom",
+      "refersTo": "board",
+      "description": "Signature: departures-board rows with hinged flap glyphs; hover flips the changed glyph.",
+      "html": "<div class=\"ds-board\"><button class=\"ds-brow\"><span class=\"ds-flap\"><i>1</i><i>9</i><i class=\"sp\"></i><i>3</i><i>0</i></span><span class=\"ds-title\">Lật mặt 8</span><span class=\"ds-room\">IMAX</span><span class=\"ds-n\">42</span></button><button class=\"ds-brow is-cur\"><span class=\"ds-flap\"><i>2</i><i>1</i><i class=\"sp\"></i><i>1</i><i>5</i></span><span class=\"ds-title\">Dune: Phần hai</span><span class=\"ds-room\">Dolby</span><span class=\"ds-n\">7</span></button></div>",
+      "css": ":host{--ground:#E6E1D6;--paper:#F3EFE6;--paper-hi:#FBF9F4;--line:#CFC8BA;--line-soft:#DDD7CB;--ink:#1C1D20;--ink-2:#4A463F;--ink-3:#625D53;--board:#17191C;--board-2:#24272B;--board-3:#2E3237;--board-line:#33373C;--board-ink:#F3EFE6;--board-mute:#A9ACB2;--hinge:#0C0D0F;--signal:#F2C230;--signal-hover:#E5B21C;--signal-ink:#17191C;--ok:#23744A;--warn:#E08A1E;--bad:#B8322A;--tier-vip:#24396F;--tier-couple:#7B2D6B;--seat-line:#8F897C;--font-ui:\"Be Vietnam Pro\",\"Segoe UI\",system-ui,sans-serif;--font-board:\"Barlow Condensed\",\"Arial Narrow\",\"Roboto Condensed\",sans-serif;--ease-out:cubic-bezier(0.16,1,0.3,1);} .ds-board{background:var(--board);color:var(--board-ink);border-radius:12px;padding:12px;box-shadow:inset 0 0 0 1px #000,inset 0 0 0 5px var(--board-3);} .ds-brow{display:grid;grid-template-columns:74px 1fr 50px 30px;gap:10px;align-items:center;width:100%;padding:8px;border:0;border-top:1px solid var(--board-line);background:transparent;color:inherit;text-align:left;cursor:pointer;transition:background-color 140ms var(--ease-out);} .ds-brow:hover{background:#1F2226;} .ds-brow:focus-visible{outline:2px solid var(--signal);outline-offset:-2px;} .ds-brow.is-cur{background:var(--board-3);box-shadow:inset 0 0 0 1px var(--signal);border-radius:4px;} .ds-flap{display:inline-flex;gap:2px;font:600 21px/1 var(--font-board);perspective:400px;} .ds-flap i{position:relative;font-style:normal;min-width:.66em;padding:.14em .08em .1em;text-align:center;background:var(--board-2);border-radius:2px;} .ds-flap i::after{content:'';position:absolute;left:0;right:0;top:50%;height:1px;background:var(--hinge);opacity:.85;} .ds-flap i.sp{background:transparent;min-width:.3em;} .ds-flap i.sp::after{display:none;} .ds-brow.is-cur .ds-flap i:not(.sp){background:var(--signal);color:var(--signal-ink);} .ds-brow:hover .ds-flap i:nth-child(5){animation:ds-flip 240ms var(--ease-out) both;} @keyframes ds-flip{0%{transform:rotateX(-88deg);filter:brightness(1.6);}60%{transform:rotateX(8deg);}100%{transform:none;filter:none;}} @media (prefers-reduced-motion:reduce){.ds-brow:hover .ds-flap i{animation:none;}} .ds-title{font:600 17px/1.12 var(--font-board);letter-spacing:.02em;text-transform:uppercase;} .ds-room{font:600 13px/1 var(--font-board);letter-spacing:.06em;text-transform:uppercase;} .ds-n{font:600 20px/1 var(--font-board);text-align:right;font-variant-numeric:tabular-nums;}"
+    },
+    {
+      "name": "Seat States",
+      "kind": "custom",
+      "refersTo": "seat",
+      "description": "Seat state by form: standard, VIP thick top, couple pair, selected, mine (double), held (dashed), booked (hatched + struck).",
+      "html": "<div class=\"ds-seats\"><button class=\"ds-seat\">A1</button><button class=\"ds-seat vip\">C4</button><span class=\"ds-pair\"><button class=\"ds-seat cp\">E1</button><button class=\"ds-seat cp\">E2</button></span><button class=\"ds-seat sel\">A2</button><button class=\"ds-seat mine\">A3</button><button class=\"ds-seat held\" disabled>A4</button><button class=\"ds-seat booked\" disabled>A5</button></div>",
+      "css": ":host{--ground:#E6E1D6;--paper:#F3EFE6;--paper-hi:#FBF9F4;--line:#CFC8BA;--line-soft:#DDD7CB;--ink:#1C1D20;--ink-2:#4A463F;--ink-3:#625D53;--board:#17191C;--board-2:#24272B;--board-3:#2E3237;--board-line:#33373C;--board-ink:#F3EFE6;--board-mute:#A9ACB2;--hinge:#0C0D0F;--signal:#F2C230;--signal-hover:#E5B21C;--signal-ink:#17191C;--ok:#23744A;--warn:#E08A1E;--bad:#B8322A;--tier-vip:#24396F;--tier-couple:#7B2D6B;--seat-line:#8F897C;--font-ui:\"Be Vietnam Pro\",\"Segoe UI\",system-ui,sans-serif;--font-board:\"Barlow Condensed\",\"Arial Narrow\",\"Roboto Condensed\",sans-serif;--ease-out:cubic-bezier(0.16,1,0.3,1);} .ds-seats{display:flex;gap:6px;align-items:center;padding:12px;background:var(--paper);} .ds-pair{display:flex;gap:2px;} .ds-seat{--c:var(--seat-line);position:relative;width:38px;height:34px;padding:0;border:2px solid var(--c);border-radius:7px 7px 4px 4px;background:var(--paper-hi);color:var(--ink-2);font:600 12px/1 var(--font-board);cursor:pointer;transition:background-color 120ms var(--ease-out),transform 120ms var(--ease-out);} .ds-seat:hover:not(:disabled){background:#FFF6D6;transform:translateY(-1px);} .ds-seat:focus-visible{outline:2px solid var(--board);outline-offset:2px;box-shadow:0 0 0 5px var(--signal);} .ds-seat.vip{--c:var(--tier-vip);color:var(--tier-vip);border-top-width:5px;} .ds-seat.cp{--c:var(--tier-couple);color:var(--tier-couple);border-radius:9px 9px 4px 4px;border-bottom-width:4px;} .ds-pair .cp:first-child{border-top-right-radius:2px;border-bottom-right-radius:2px;} .ds-pair .cp:last-child{border-top-left-radius:2px;border-bottom-left-radius:2px;} .ds-seat.sel{background:var(--signal);border-color:var(--board);color:var(--signal-ink);} .ds-seat.mine{background:var(--signal);border:4px double var(--board);color:var(--signal-ink);} .ds-seat.held{border-style:dashed;background:transparent;color:#8A8478;--c:#A39D90;cursor:not-allowed;} .ds-seat.booked{border-color:#C9C2B5;color:#A39D90;background:repeating-linear-gradient(135deg,#D9D3C6 0 3px,var(--paper) 3px 7px);cursor:not-allowed;} .ds-seat.booked::after{content:'';position:absolute;left:6px;right:6px;top:50%;height:2px;background:#A39D90;transform:rotate(-20deg);}"
+    },
+    {
+      "name": "Ticket Stub Pay Bar",
+      "kind": "custom",
+      "refersTo": "stub",
+      "description": "Black stub with notched perforation, yellow flap total and the signal pay button.",
+      "html": "<div class=\"ds-stub\"><div class=\"ds-stub-top\"><h3>Vé của bạn</h3><p>IMAX · 19:30 · C4, C5</p></div><div class=\"ds-stub-pay\"><div class=\"ds-grand\"><span>Tổng</span><b>320.000đ</b></div><button class=\"ds-pay\">Thanh toán</button></div></div>",
+      "css": ":host{--ground:#E6E1D6;--paper:#F3EFE6;--paper-hi:#FBF9F4;--line:#CFC8BA;--line-soft:#DDD7CB;--ink:#1C1D20;--ink-2:#4A463F;--ink-3:#625D53;--board:#17191C;--board-2:#24272B;--board-3:#2E3237;--board-line:#33373C;--board-ink:#F3EFE6;--board-mute:#A9ACB2;--hinge:#0C0D0F;--signal:#F2C230;--signal-hover:#E5B21C;--signal-ink:#17191C;--ok:#23744A;--warn:#E08A1E;--bad:#B8322A;--tier-vip:#24396F;--tier-couple:#7B2D6B;--seat-line:#8F897C;--font-ui:\"Be Vietnam Pro\",\"Segoe UI\",system-ui,sans-serif;--font-board:\"Barlow Condensed\",\"Arial Narrow\",\"Roboto Condensed\",sans-serif;--ease-out:cubic-bezier(0.16,1,0.3,1);} .ds-stub{max-width:320px;background:var(--board);color:var(--board-ink);border-radius:12px;overflow:hidden;font:400 14px/1.5 var(--font-ui);box-shadow:0 2px 3px rgba(12,13,15,.25),0 18px 40px -22px rgba(12,13,15,.6);} .ds-stub-top{position:relative;padding:18px 20px;border-bottom:2px dashed #4A4E55;} .ds-stub-top::before,.ds-stub-top::after{content:'';position:absolute;bottom:-11px;width:20px;height:20px;border-radius:50%;background:var(--ground);z-index:1;} .ds-stub-top::before{left:-10px;} .ds-stub-top::after{right:-10px;} .ds-stub-top h3{margin:0 0 8px;font:700 18px/1 var(--font-board);letter-spacing:.14em;text-transform:uppercase;color:var(--signal);} .ds-stub-top p{margin:0;color:var(--board-mute);} .ds-stub-pay{padding:18px 20px 20px;background:#1D2023;} .ds-grand{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;} .ds-grand span{font:700 14px/1 var(--font-board);letter-spacing:.16em;text-transform:uppercase;} .ds-grand b{font:600 30px/1 var(--font-board);color:var(--signal);font-variant-numeric:tabular-nums;} .ds-pay{width:100%;min-height:48px;border:1px solid #C99A10;border-radius:8px;background:var(--signal);color:var(--signal-ink);font:600 15px var(--font-ui);cursor:pointer;} .ds-pay:hover{background:var(--signal-hover);} .ds-pay:focus-visible{outline:2px solid var(--signal);outline-offset:3px;}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Departures Board",
+    "overview": "Every showtime, auditorium, seat count and sale status lives on matte black split-flap boards set into a light stone concourse. The board is the system's one loud object: dark, condensed, all-caps, hinged glyph tiles that flip when a value changes. Everything around it (paper panels, forms, tables, dialogs) is quiet concourse furniture in warm off-whites and hairline borders, so the eye always lands on the board first.\n\nThe density is operational, not promotional. Customers, counter staff and the manager all work in the same board-and-panel grammar: read the board, pick a row, act in the panel beside it, settle on a black ticket stub. Colour is rationed: signal yellow means \"your selection / your next action\"; green, amber and red appear only where they mean on sale, few left, sold out; navy and plum appear only as seat tiers. The world refuses the cinema category default of a black poster carousel with a red buy button.",
+    "keyCharacteristics": [
+      "Light stone ground with paper panels; black flap boards as the focal surfaces.",
+      "Split-flap glyph tiles with a hinge line for times, counts, totals, countdowns and KPIs.",
+      "Signal yellow is the only accent; status and tier colours are semantic, never decorative.",
+      "Barlow Condensed uppercase for anything a station board would print; Be Vietnam Pro for everything you read in sentences.",
+      "Tabular figures everywhere; money and counts right-aligned.",
+      "Seat state carried by form (stroke, weight, pattern), with colour as a second channel."
+    ],
+    "rules": [
+      {
+        "name": "The One Signal Rule",
+        "body": "Signal yellow marks only what is selected or what to press next. It never decorates a heading, a border or an empty state. Board-section titles printed in yellow on black (the board head, the stub head, KPI board title) are the single typographic exception, because the board world prints them that way.",
+        "section": "colors"
+      },
+      {
+        "name": "The Colour-Means-State Rule",
+        "body": "Green, amber and red appear only as sale or validity status; navy and plum only as seat tiers. If a colour does not answer \"what state is this?\", it is not on the palette.",
+        "section": "colors"
+      },
+      {
+        "name": "The Board Prints, the Panel Speaks Rule",
+        "body": "Anything a departures board would print (times, rooms, counts, statuses, film titles on the board, section heads) is Barlow Condensed uppercase. Sentences, form labels, buttons and helper text are Be Vietnam Pro in sentence case.",
+        "section": "typography"
+      },
+      {
+        "name": "The Code-After Rule",
+        "body": "BR/CSD codes are small secondary labels set inline after a heading or tab label, in Ink 3 (Board Mute on dark, Signal on an active tab). They never sit above a heading as an eyebrow.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Rule",
+        "body": "Money, time and counts use tabular figures and right-align in tables, stubs, receipts and summaries.",
+        "section": "typography"
+      },
+      {
+        "name": "The Mounted Board Rule",
+        "body": "Only black boards (schedule board, KPI board) get the inset bezel. Paper stays paper.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** put live schedule, count, total and countdown values in split-flap tiles and update them through the flip so only changed glyphs move.",
+      "**Do** keep Signal Yellow (#F2C230) for the current selection and the next action; one Signal button per decision.",
+      "**Do** encode seat state by stroke, weight, pattern and pairing, with colour as the second channel.",
+      "**Do** set money, time and counts in tabular figures and right-align them.",
+      "**Do** place BR/CSD codes inline after the heading or tab label as small Code type.",
+      "**Do** keep the total and pay action visible: pinned pay bar on wide screens, own step on phones.",
+      "**Do** use the perforation (dashed rule with notches) wherever a ticket or receipt is torn."
+    ],
+    "donts": [
+      "**Don't** use status green, amber or red as decoration, and don't use tier navy or plum outside seats.",
+      "**Don't** flip glyphs that did not change, let a flip run past 300ms (240ms glyph + at most 40ms stagger), or animate under reduced motion.",
+      "**Don't** set code labels, kickers or eyebrows above headings.",
+      "**Don't** apply the board bezel or black board surface to ordinary forms and tables; they stay on paper.",
+      "**Don't** rely on colour alone to tell a booked seat from an available one.",
+      "**Don't** build a black poster carousel with a red buy button; the board is the hero."
+    ]
+  }
+}

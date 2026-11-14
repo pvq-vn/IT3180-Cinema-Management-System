@@ -42,6 +42,10 @@ public class ShowtimeController extends BaseController implements HttpHandler {
                 sb.append("]");
                 sendJson(exchange, 200, sb.toString());
             } else if ("POST".equalsIgnoreCase(method)) {
+                // RBAC: chỉ Quản lý rạp được lập lịch chiếu
+                if (requireRole(exchange, ROLE_MANAGER) == null) {
+                    return;
+                }
                 Map<String, String> body = JsonUtils.parseFlatObject(readRequestBody(exchange));
                 int movieId = Integer.parseInt(body.getOrDefault("movieId", "0"));
                 int auditoriumId = Integer.parseInt(body.getOrDefault("auditoriumId", "0"));
@@ -61,7 +65,7 @@ public class ShowtimeController extends BaseController implements HttpHandler {
                 sendError(exchange, 405, "METHOD_NOT_ALLOWED", "Phương thức không được hỗ trợ.");
             }
         } catch (Exception ex) {
-            sendError(exchange, 200, "SCHEDULE_ERROR", ex.getMessage());
+            handleException(exchange, ex);
         }
     }
 

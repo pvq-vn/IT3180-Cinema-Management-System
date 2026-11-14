@@ -112,18 +112,43 @@ public class AuthService {
                     "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Quản lý rạp.", null, null);
         }
 
-        // [Node 8] Đối chiếu mật khẩu băm SHA-256
+        // [Node 8] Đối chiếu mật khẩu băm (PBKDF2 có salt, hoặc SHA-256 cũ của dữ liệu mẫu)
         if (!PasswordUtils.verifyPassword(password, foundUser.getPasswordHash())) {
             // [Node 9] Trả về lỗi sai mật khẩu
             return new AuthResult(false, "WRONG_PASSWORD",
                     "Mật khẩu không chính xác. Vui lòng kiểm tra lại.", null, null);
         }
 
-        // [Node 10] Khởi tạo phiên đăng nhập hợp lệ
+        // [Node 10] Nâng cấp băm cũ sang PBKDF2 (nếu cần) và khởi tạo phiên đăng nhập hợp lệ
+        upgradeLegacyHash(foundUser, password);
         String token = SessionManager.createSession(foundUser);
         return new AuthResult(true, "SUCCESS",
                 "Đăng nhập thành công. Xin chào " + foundUser.getFullName() + "!", token, foundUser);
         // [Node 11] Kết thúc hàm
+    }
+
+    /**
+     * Băm lại mật khẩu định dạng SHA-256 cũ (không salt) sang PBKDF2 có salt ngay sau khi đăng nhập đúng.
+     * Không làm gì nếu tài khoản đã ở định dạng mới.
+     *
+     * @param user          Người dùng vừa xác thực thành công
+     * @param plainPassword Mật khẩu văn bản thuần vừa nhập
+     */
+    void upgradeLegacyHash(User user, String plainPassword) {
+        if (!PasswordUtils.needsUpgrade(user.getPasswordHash())) {
+            return;
+        }
+        String newHash = PasswordUtils.hashPassword(plainPassword);
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement("UPDATE users SET password_hash = ? WHERE user_id = ?")) {
+            ps.setString(1, newHash);
+            ps.setInt(2, user.getUserId());
+            ps.executeUpdate();
+            user.setPasswordHash(newHash);
+        } catch (SQLException ex) {
+            // Không chặn đăng nhập nếu nâng cấp thất bại; lần sau sẽ thử lại
+            System.err.println("[AUTH] Không nâng cấp được mật khẩu cho user #" + user.getUserId() + ": " + ex.getMessage());
+        }
     }
 
     /**

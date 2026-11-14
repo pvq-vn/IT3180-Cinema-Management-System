@@ -6,6 +6,7 @@ import com.cinehub.controllers.ComboController;
 import com.cinehub.controllers.MovieController;
 import com.cinehub.controllers.ReportController;
 import com.cinehub.controllers.ShowtimeController;
+import com.cinehub.utils.AppConfig;
 import com.cinehub.utils.DatabaseConnection;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -46,7 +47,7 @@ public class CineHubApplication {
      * @throws Exception Nếu không thể mở cổng mạng hoặc khởi tạo CSDL
      */
     public static void main(String[] args) throws Exception {
-        int port = DEFAULT_PORT;
+        int port = AppConfig.getInt("server.port", DEFAULT_PORT);
         boolean verifyOnly = false;
         if (args != null) {
             for (String arg : args) {
@@ -65,7 +66,7 @@ public class CineHubApplication {
             System.out.println("  Học phần: IT3180 - Nhập môn Công nghệ Phần mềm (Nhóm 3 - HUST)");
             System.out.println("  Giảng viên hướng dẫn: TS. Nguyễn Nhất Hải");
             System.out.println("======================================================================");
-            System.out.println("[DB] Đã khởi tạo thành công CSDL quan hệ (9 bảng 3NF + dữ liệu mẫu).");
+            System.out.println("[DB] Đã khởi tạo thành công CSDL quan hệ (10 bảng + dữ liệu mẫu).");
         }
 
         startServer(port);

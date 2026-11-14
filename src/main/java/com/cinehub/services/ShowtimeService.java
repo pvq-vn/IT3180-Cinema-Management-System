@@ -2,6 +2,7 @@ package com.cinehub.services;
 
 import com.cinehub.models.SeatPricingPolicy;
 import com.cinehub.models.Showtime;
+import com.cinehub.utils.AppConfig;
 import com.cinehub.utils.DatabaseConnection;
 import com.cinehub.utils.PasswordUtils;
 import java.sql.Connection;
@@ -26,7 +27,18 @@ import java.util.List;
 public class ShowtimeService {
 
     /** Thời gian đệm dọn vệ sinh phòng giữa 2 suất chiếu liên tiếp theo BR01 (15 phút). */
-    public static final int CLEANING_BUFFER_MINUTES = 15;
+    public static final int CLEANING_BUFFER_MINUTES = AppConfig.getInt("showtime.cleaning.buffer.minutes", 15);
+
+    /** Khóa dùng chung mọi instance để kiểm tra BR01 và chèn suất chiếu là một bước nguyên tử. */
+    private static final Object SCHEDULE_LOCK = new Object();
+
+    private static PreparedStatement prepare(Connection conn, String sql, List<Object> params) throws SQLException {
+        PreparedStatement ps = conn.prepareStatement(sql);
+        for (int i = 0; i < params.size(); i++) {
+            ps.setObject(i + 1, params.get(i));
+        }
+        return ps;
+    }
 
     private static final DateTimeFormatter TS_FMT =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -83,17 +95,20 @@ public class ShowtimeService {
                 + "JOIN auditoriums a ON st.auditorium_id = a.auditorium_id "
                 + "WHERE st.status <> 'CANCELLED' ");
 
+        List<Object> params = new ArrayList<>();
         if (movieId != null && movieId > 0) {
-            sql.append("AND st.movie_id = ").append(movieId).append(" ");
+            sql.append("AND st.movie_id = ? ");
+            params.add(movieId);
         }
         if (!PasswordUtils.isBlank(dateFilter) && !"ALL".equalsIgnoreCase(dateFilter.trim())) {
-            sql.append("AND SUBSTRING(CAST(st.start_time AS VARCHAR), 1, 10) = '")
-               .append(dateFilter.trim().replace("'", "")).append("' ");
+            // Tham số hóa thay cho ghép chuỗi (chống SQL injection)
+            sql.append("AND SUBSTRING(CAST(st.start_time AS VARCHAR), 1, 10) = ? ");
+            params.add(dateFilter.trim());
         }
         sql.append("ORDER BY st.start_time ASC, st.auditorium_id ASC");
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql.toString());
+             PreparedStatement ps = prepare(conn, sql.toString(), params);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 Showtime st = new Showtime(
@@ -142,8 +157,14 @@ public class ShowtimeService {
      * @param basePrice     Giá vé cơ sở (VNĐ)
      * @return Đối tượng {@link ScheduleResult}
      */
-    public synchronized ScheduleResult createShowtime(int movieId, int auditoriumId,
-                                                      String startTimeStr, double basePrice) {
+    public ScheduleResult createShowtime(int movieId, int auditoriumId, String startTimeStr, double basePrice) {
+        synchronized (SCHEDULE_LOCK) {
+            return createShowtimeLocked(movieId, auditoriumId, startTimeStr, basePrice);
+        }
+    }
+
+    private ScheduleResult createShowtimeLocked(int movieId, int auditoriumId,
+                                                String startTimeStr, double basePrice) {
         // [Node 1] Kiểm tra tính hợp lệ của giá cơ sở và chuỗi thời gian
         if (basePrice <= 0 || PasswordUtils.isBlank(startTimeStr)) {
             // [Node 2] Trả về lỗi tham số đầu vào

@@ -3,8 +3,10 @@ package com.cinehub.controllers;
 import com.cinehub.models.Invoice;
 import com.cinehub.models.ShowtimeSeat;
 import com.cinehub.models.Ticket;
+import com.cinehub.models.User;
 import com.cinehub.services.BookingService;
 import com.cinehub.utils.JsonUtils;
+import com.cinehub.utils.SessionManager;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
@@ -55,7 +57,14 @@ public class BookingController extends BaseController implements HttpHandler {
                 sb.append("]");
                 sendJson(exchange, 200, sb.toString());
             } else if (path.endsWith("/tickets") && "GET".equalsIgnoreCase(method)) {
-                List<Ticket> tickets = bookingService.getAllTickets();
+                // RBAC: Nhân viên/Quản lý xem toàn bộ vé; Khách hàng chỉ xem vé của chính mình
+                User user = requireLogin(exchange);
+                if (user == null) {
+                    return;
+                }
+                List<Ticket> tickets = isStaffOrManager(user)
+                        ? bookingService.getAllTickets()
+                        : bookingService.getTicketsByUser(user.getUserId());
                 StringBuilder sb = new StringBuilder("[");
                 for (int i = 0; i < tickets.size(); i++) {
                     if (i > 0) {
@@ -66,9 +75,14 @@ public class BookingController extends BaseController implements HttpHandler {
                 sb.append("]");
                 sendJson(exchange, 200, sb.toString());
             } else if (path.endsWith("/hold") && "POST".equalsIgnoreCase(method)) {
+                User user = requireLogin(exchange);
+                if (user == null) {
+                    return;
+                }
                 Map<String, String> body = JsonUtils.parseFlatObject(readRequestBody(exchange));
                 int showtimeId = Integer.parseInt(body.getOrDefault("showtimeId", "0"));
-                int userId = Integer.parseInt(body.getOrDefault("userId", "4"));
+                // Danh tính lấy từ phiên đăng nhập, bỏ qua mọi userId gửi kèm trong thân yêu cầu
+                int userId = user.getUserId();
                 List<Integer> seatIds = JsonUtils.parseIntList(body.get("seatIds"));
 
                 BookingService.BookingResult res = bookingService.holdSeats(showtimeId, seatIds, userId);
@@ -78,12 +92,23 @@ public class BookingController extends BaseController implements HttpHandler {
                         + ",\"lockedUntil\":\"" + JsonUtils.escape(res.getLockedUntil()) + "\"}";
                 sendJson(exchange, 200, json);
             } else if (path.endsWith("/checkout") && "POST".equalsIgnoreCase(method)) {
+                User user = requireLogin(exchange);
+                if (user == null) {
+                    return;
+                }
                 Map<String, String> body = JsonUtils.parseFlatObject(readRequestBody(exchange));
                 int showtimeId = Integer.parseInt(body.getOrDefault("showtimeId", "0"));
-                int userId = Integer.parseInt(body.getOrDefault("userId", "4"));
+                int userId = user.getUserId();
                 String customerName = body.get("customerName");
                 String customerPhone = body.get("customerPhone");
                 String bookingChannel = body.getOrDefault("bookingChannel", "ONLINE");
+                // RBAC: chỉ Nhân viên/Quản lý được bán vé tại quầy POS
+                if ("POS".equalsIgnoreCase(bookingChannel == null ? "" : bookingChannel.trim())
+                        && !isStaffOrManager(user)) {
+                    sendError(exchange, 403, "FORBIDDEN",
+                            "Chỉ Nhân viên quầy hoặc Quản lý rạp được bán vé qua kênh POS.");
+                    return;
+                }
                 String paymentMethod = body.getOrDefault("paymentMethod", "VIETQR");
                 List<Integer> seatIds = JsonUtils.parseIntList(body.get("seatIds"));
 
@@ -145,9 +170,14 @@ public class BookingController extends BaseController implements HttpHandler {
                         + "},\"tickets\":" + tktSb + "}";
                 sendJson(exchange, 200, json);
             } else if (path.endsWith("/checkin") && "POST".equalsIgnoreCase(method)) {
+                // RBAC: chỉ Nhân viên/Quản lý được soát vé tại cửa phòng chiếu
+                User staff = requireRole(exchange, ROLE_STAFF, ROLE_MANAGER);
+                if (staff == null) {
+                    return;
+                }
                 Map<String, String> body = JsonUtils.parseFlatObject(readRequestBody(exchange));
                 String code = body.get("code");
-                int staffId = Integer.parseInt(body.getOrDefault("staffId", "2"));
+                int staffId = staff.getUserId();
 
                 BookingService.BookingResult res = bookingService.checkInTicket(code, staffId);
                 String tktJson = (res.getTickets() != null && !res.getTickets().isEmpty())
@@ -158,16 +188,32 @@ public class BookingController extends BaseController implements HttpHandler {
                         + ",\"ticket\":" + tktJson + "}";
                 sendJson(exchange, 200, json);
             } else if (path.endsWith("/cancel") && "POST".equalsIgnoreCase(method)) {
+                User user = requireLogin(exchange);
+                if (user == null) {
+                    return;
+                }
                 Map<String, String> body = JsonUtils.parseFlatObject(readRequestBody(exchange));
                 String ticketCode = body.get("ticketCode");
+                // RBAC: Khách hàng chỉ được hủy vé thuộc hóa đơn của chính mình
+                if (!isStaffOrManager(user)) {
+                    Integer ownerId = bookingService.getTicketOwnerUserId(ticketCode);
+                    if (ownerId == null || ownerId != user.getUserId()) {
+                        sendError(exchange, 403, "FORBIDDEN", "Bạn chỉ được hủy vé do chính tài khoản mình đặt.");
+                        return;
+                    }
+                }
                 BookingService.BookingResult res = bookingService.cancelTicket(ticketCode);
                 sendJson(exchange, 200, JsonUtils.statusResponse(res.isSuccess(), res.getCode(), res.getMessage()));
             } else {
                 sendError(exchange, 405, "METHOD_NOT_ALLOWED", "Phương thức không được hỗ trợ.");
             }
         } catch (Exception ex) {
-            sendError(exchange, 500, "SERVER_ERROR", ex.getMessage());
+            handleException(exchange, ex);
         }
+    }
+
+    private boolean isStaffOrManager(User user) {
+        return SessionManager.hasRole(user, ROLE_STAFF, ROLE_MANAGER);
     }
 
     private String ticketToJson(Ticket t) {

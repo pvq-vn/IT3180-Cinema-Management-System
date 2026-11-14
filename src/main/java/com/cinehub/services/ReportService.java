@@ -118,16 +118,20 @@ public class ReportService {
                 }
             }
 
-            // Doanh thu theo từng bộ phim
+            // Doanh thu VÉ theo từng bộ phim (không gộp combo F&B, không tính vé đã hủy).
+            // Tổng cột này luôn bằng seatRevenue; đếm suất chiếu bỏ qua suất CANCELLED.
             StringBuilder movieRevJson = new StringBuilder("[");
             String movieSql = "SELECT m.movie_id, m.title, "
-                    + "COUNT(DISTINCT st.showtime_id) AS showtime_cnt, "
+                    + "(SELECT COUNT(*) FROM showtimes s1 WHERE s1.movie_id = m.movie_id "
+                    + " AND s1.status <> 'CANCELLED') AS showtime_cnt, "
                     + "(SELECT COUNT(*) FROM tickets t JOIN showtimes s2 ON t.showtime_id = s2.showtime_id "
                     + " WHERE s2.movie_id = m.movie_id AND t.ticket_status <> 'CANCELLED') AS tickets_sold, "
-                    + "COALESCE((SELECT SUM(i.total_amount) FROM invoices i JOIN showtimes s3 ON i.showtime_id = s3.showtime_id "
-                    + " WHERE s3.movie_id = m.movie_id AND i.payment_status = 'PAID'), 0) AS revenue "
-                    + "FROM movies m LEFT JOIN showtimes st ON m.movie_id = st.movie_id "
-                    + "GROUP BY m.movie_id, m.title ORDER BY revenue DESC, m.movie_id ASC";
+                    + "COALESCE((SELECT SUM(t3.ticket_price) FROM tickets t3 "
+                    + " JOIN invoices i ON t3.invoice_id = i.invoice_id "
+                    + " JOIN showtimes s3 ON t3.showtime_id = s3.showtime_id "
+                    + " WHERE s3.movie_id = m.movie_id AND i.payment_status = 'PAID' "
+                    + " AND t3.ticket_status <> 'CANCELLED'), 0) AS revenue "
+                    + "FROM movies m ORDER BY revenue DESC, m.movie_id ASC";
             try (PreparedStatement ps = conn.prepareStatement(movieSql);
                  ResultSet rs = ps.executeQuery()) {
                 boolean first = true;

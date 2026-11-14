@@ -1,26 +1,33 @@
 # =============================================================================
-# CINEHUB CMS - MẪU CẤU HÌNH KẾT NỐI CƠ SỞ DỮ LIỆU (db.properties.example)
-# Sao chép tập tin này thành config/db.properties để tùy chỉnh môi trường
+# CINEHUB CMS - MẪU CẤU HÌNH (db.properties.example)
+# Sao chép tập tin này thành config/db.properties để tùy chỉnh môi trường.
+# Không có config/db.properties: mọi giá trị dùng mặc định ghi bên dưới (AppConfig.java).
+# Mỗi khóa cũng có thể ghi đè bằng tham số JVM, ví dụ: java -Dserver.port=9090 ...
 # =============================================================================
 
-# Chế độ mặc định: H2 Database nhúng tương thích MySQL (chạy ngay không cần cài đặt MySQL)
+# Mặc định: H2 in-memory (dữ liệu mẫu nạp lại mỗi lần khởi động, mất khi tắt máy chủ)
 db.driver=org.h2.Driver
-db.url=jdbc:h2:./data/cinehub_db;MODE=MySQL;DATABASE_TO_LOWER=TRUE;AUTO_SERVER=TRUE
+db.url=jdbc:h2:mem:cinehub_db;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
 db.username=sa
 db.password=
 
-# Cấu hình thay thế khi triển khai trên MySQL Server 8.0+:
+# Giữ dữ liệu giữa các lần chạy: dùng H2 dạng file (tạo thư mục ./data)
+# db.url=jdbc:h2:./data/cinehub_db;MODE=MySQL;DATABASE_TO_LOWER=TRUE;AUTO_SERVER=TRUE
+
+# MySQL Server 8.0+ (CHƯA kiểm thử; cần tự thêm mysql-connector-j vào classpath):
 # db.driver=com.mysql.cj.jdbc.Driver
 # db.url=jdbc:mysql://localhost:3306/cinehub_db?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true
 # db.username=root
 # db.password=your_secret_password
 
-# Cổng HTTP Server của ứng dụng Web MVC
+# Cổng HTTP của máy chủ web (tham số dòng lệnh, ví dụ "... CineHubApplication 9090", được ưu tiên hơn)
 server.port=8080
 
-# Thời gian giữ ghế tạm thời (BR03 - tính bằng phút)
+# Thời gian giữ ghế tạm thời (BR03 - phút)
 booking.hold.minutes=5
 
-# Thời gian đệm dọn vệ sinh phòng chiếu giữa 2 suất chiếu (BR01 - tính bằng phút)
+# Thời gian đệm dọn vệ sinh phòng chiếu giữa 2 suất chiếu (BR01 - phút)
 showtime.cleaning.buffer.minutes=15
 
+# Phiên đăng nhập tự hết hạn khi không hoạt động quá số phút này
+session.timeout.minutes=480

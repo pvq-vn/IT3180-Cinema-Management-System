@@ -1,11 +1,22 @@
 package com.cinehub;
 
+import com.cinehub.models.Combo;
 import com.cinehub.models.SeatPricingPolicy;
 import com.cinehub.models.ShowtimeSeat;
 import com.cinehub.services.AuthService;
 import com.cinehub.services.BookingService;
+import com.cinehub.services.ComboService;
+import com.cinehub.services.ReportService;
 import com.cinehub.services.ShowtimeService;
 import com.cinehub.utils.DatabaseConnection;
+import com.cinehub.utils.PasswordUtils;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -13,6 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Bộ thực thi Kiểm thử tự động (Automated Unit &amp; Integration Test Suite) cho hệ thống CineHub CMS.
@@ -30,6 +43,10 @@ public class CineHubTestRunner {
     private static int totalTests = 0;
     private static int passedTests = 0;
     private static int failedTests = 0;
+
+    /** Cổng riêng cho kiểm thử RBAC qua HTTP (tránh đụng cổng 8080 của máy chủ demo). */
+    private static final int RBAC_TEST_PORT = 18089;
+    private static final HttpClient HTTP = HttpClient.newHttpClient();
 
     /**
      * Điểm chạy bộ kiểm thử tự động và xuất bảng kết quả kiểm thử chi tiết ra màn hình Console.
@@ -191,9 +208,10 @@ public class CineHubTestRunner {
         assertCase("TC_BB_QR_03", "Chặn mã vé QR giả mạo -> TICKET_NOT_FOUND",
                 !rQr3.isSuccess() && "TICKET_NOT_FOUND".equals(rQr3.getCode()), rQr3.getCode());
 
-        // 4. Hủy vé ISSUED (TKT-002-D04) rồi thử quét QR -> TICKET_CANCELLED
-        BookingService.BookingResult rCancel = bookingService.cancelTicket("TKT-002-D04");
-        BookingService.BookingResult rQr4 = bookingService.checkInTicket("TKT-002-D04", 2);
+        // 4. Hủy vé ISSUED của suất NGÀY MAI (suất #8, chưa chiếu) rồi thử quét QR -> TICKET_CANCELLED
+        String futureTicket = bookOnline(bookingService, 8, 4, 1, null).getTickets().get(0).getTicketCode();
+        BookingService.BookingResult rCancel = bookingService.cancelTicket(futureTicket);
+        BookingService.BookingResult rQr4 = bookingService.checkInTicket(futureTicket, 2);
         assertCase("TC_BB_QR_04", "Hủy vé trước giờ chiếu (giải phóng ghế) & Chặn soát vé đã hủy -> TICKET_CANCELLED",
                 rCancel.isSuccess() && !rQr4.isSuccess() && "TICKET_CANCELLED".equals(rQr4.getCode()),
                 rCancel.getCode() + " -> " + rQr4.getCode());
@@ -261,6 +279,18 @@ public class CineHubTestRunner {
                 successCount.get() == 1 && conflictCount.get() == 1,
                 "Success=" + successCount.get() + ", Conflict=" + conflictCount.get());
 
+        // -------------------------------------------------------------------------
+        // PHẦN 6: KIỂM THỬ PHÂN QUYỀN RBAC QUA HTTP (tầng Controller + SessionManager)
+        // -------------------------------------------------------------------------
+        System.out.println("\n[PHẦN 6] KIỂM THỬ PHÂN QUYỀN RBAC PHÍA MÁY CHỦ (gọi API thật qua HTTP):");
+        runRbacTests(bookingService);
+
+        // -------------------------------------------------------------------------
+        // PHẦN 7: KIỂM THỬ HỒI QUY CÁC LỖI ĐÃ SỬA (AUDIT F-02 ... F-25)
+        // -------------------------------------------------------------------------
+        System.out.println("\n[PHẦN 7] KIỂM THỬ HỒI QUY CÁC LỖI NGHIỆP VỤ ĐÃ SỬA (BR03, BR04, CSD05, bảo mật):");
+        runRegressionTests(new BookingService(), new ShowtimeService());
+
         // Khôi phục lại dữ liệu mẫu sạch sẽ sau khi chạy kiểm thử
         DatabaseConnection.resetDatabase();
 
@@ -272,6 +302,257 @@ public class CineHubTestRunner {
         if (failedTests > 0) {
             System.exit(1);
         }
+    }
+
+    /** Đặt vé online đúng quy trình (giữ ghế rồi thanh toán) cho n ghế trống đầu tiên của suất chiếu. */
+    private static BookingService.BookingResult bookOnline(BookingService bs, int showtimeId, int userId,
+                                                           int seatCount, Map<Integer, Integer> combos) {
+        List<Integer> seats = freeSeats(bs, showtimeId, seatCount);
+        BookingService.BookingResult hold = bs.holdSeats(showtimeId, seats, userId);
+        if (!hold.isSuccess()) {
+            throw new IllegalStateException("Không giữ được ghế: " + hold.getMessage());
+        }
+        BookingService.BookingResult res = bs.confirmCheckout(showtimeId, seats,
+                combos == null ? new HashMap<>() : combos, userId, "Khách kiểm thử", "0900000000", "ONLINE", "VIETQR");
+        if (!res.isSuccess()) {
+            throw new IllegalStateException("Không thanh toán được: " + res.getMessage());
+        }
+        return res;
+    }
+
+    private static List<Integer> freeSeats(BookingService bs, int showtimeId, int count) {
+        List<Integer> ids = new ArrayList<>();
+        for (ShowtimeSeat s : bs.getSeatMapForShowtime(showtimeId)) {
+            if ("AVAILABLE".equals(s.getStatus()) && ids.size() < count) {
+                ids.add(s.getShowtimeSeatId());
+            }
+        }
+        return ids;
+    }
+
+    private static double num(String json, String key) {
+        Matcher m = Pattern.compile("\"" + key + "\":(-?[0-9.E]+)").matcher(json);
+        return m.find() ? Double.parseDouble(m.group(1)) : Double.NaN;
+    }
+
+    private static double sumMovieRevenue(String json) {
+        String part = json.substring(json.indexOf("\"movieBreakdown\""), json.indexOf("\"invoices\""));
+        Matcher m = Pattern.compile("\"revenue\":(-?[0-9.E]+)").matcher(part);
+        double sum = 0;
+        while (m.find()) {
+            sum += Double.parseDouble(m.group(1));
+        }
+        return sum;
+    }
+
+    private static String comboStatus(int comboId) {
+        for (Combo c : new ComboService().getAllCombos(false)) {
+            if (c.getComboId() == comboId) {
+                return c.getStatus() + "/" + c.getStockQuantity();
+            }
+        }
+        return "?";
+    }
+
+    private static void runRegressionTests(BookingService bs, ShowtimeService ss) throws Exception {
+        DatabaseConnection.resetDatabase();
+        ReportService report = new ReportService();
+
+        // F-03: Online phải giữ ghế trước; POS được bán thẳng ghế trống
+        List<Integer> s8 = freeSeats(bs, 8, 1);
+        BookingService.BookingResult noHold = bs.confirmCheckout(8, s8, new HashMap<>(), 4,
+                "A", "0900000000", "ONLINE", "VIETQR");
+        BookingService.BookingResult pos = bs.confirmCheckout(8, s8, new HashMap<>(), 2,
+                "B", "0900000000", "POS", "CASH");
+        assertCase("TC_REG_BR03_01", "Online chưa giữ ghế -> SEAT_NOT_HELD; POS bán thẳng ghế trống -> CHECKOUT_SUCCESS",
+                "SEAT_NOT_HELD".equals(noHold.getCode()) && pos.isSuccess(),
+                noHold.getCode() + " / " + pos.getCode());
+
+        // F-03: giới hạn 8 ghế áp dụng cả khi thanh toán
+        BookingService.BookingResult nine = bs.confirmCheckout(8, freeSeats(bs, 8, 9), new HashMap<>(), 2,
+                "C", "0900000000", "POS", "CASH");
+        assertCase("TC_REG_BR03_02", "Thanh toán 9 ghế một lần -> INVALID_SELECTION",
+                "INVALID_SELECTION".equals(nine.getCode()), nine.getCode());
+
+        // F-04: kênh/phương thức không hợp lệ bị từ chối
+        BookingService.BookingResult kiosk = bs.confirmCheckout(8, freeSeats(bs, 8, 1), new HashMap<>(), 2,
+                "D", "0900000000", "KIOSK", "CASH");
+        BookingService.BookingResult cashOnline = bs.confirmCheckout(8, freeSeats(bs, 8, 1), new HashMap<>(), 2,
+                "E", "0900000000", "ONLINE", "CASH");
+        assertCase("TC_REG_CSD05_01", "Kênh KIOSK -> INVALID_CHANNEL; ONLINE trả CASH -> INVALID_PAYMENT_METHOD",
+                "INVALID_CHANNEL".equals(kiosk.getCode()) && "INVALID_PAYMENT_METHOD".equals(cashOnline.getCode()),
+                kiosk.getCode() + " / " + cashOnline.getCode());
+
+        // F-06: soát vé của suất ngày mai bị từ chối
+        Map<Integer, Integer> combo = new HashMap<>();
+        combo.put(1, 1);
+        BookingService.BookingResult order = bookOnline(bs, 8, 4, 2, combo);
+        String t1 = order.getTickets().get(0).getTicketCode();
+        String t2 = order.getTickets().get(1).getTicketCode();
+        BookingService.BookingResult wrongDay = bs.checkInTicket(t1, 2);
+        assertCase("TC_REG_BR04_01", "Soát vé của suất ngày mai -> WRONG_DAY",
+                "WRONG_DAY".equals(wrongDay.getCode()), wrongDay.getCode());
+
+        // F-07: mã hóa đơn theo mẫu mới, không trùng
+        String code1 = order.getInvoice().getInvoiceCode();
+        String code2 = pos.getInvoice().getInvoiceCode();
+        assertCase("TC_REG_INV_01", "Mã hóa đơn dạng INV-yyMMddHHmmss-XXXX và không trùng nhau",
+                code1.matches("INV-\\d{12}-[0-9A-F]{4}") && !code1.equals(code2), code1 + " / " + code2);
+
+        // F-02: hủy vé trừ doanh thu; hủy hết vé -> hóa đơn REFUNDED, hoàn combo và tồn kho
+        double price1 = order.getTickets().get(0).getTicketPrice();
+        double comboPrice = order.getInvoice().getComboTotal();
+        String before = report.buildDashboardReportJson();
+        int stockBefore = Integer.parseInt(comboStatus(1).split("/")[1]);
+        bs.cancelTicket(t1);
+        String mid = report.buildDashboardReportJson();
+        bs.cancelTicket(t2);
+        String after = report.buildDashboardReportJson();
+        double price2 = order.getTickets().get(1).getTicketPrice();
+        boolean partialOk = Math.abs(num(before, "totalRevenue") - num(mid, "totalRevenue") - price1) < 0.5;
+        boolean fullOk = Math.abs(num(mid, "totalRevenue") - num(after, "totalRevenue") - price2 - comboPrice) < 0.5;
+        assertCase("TC_REG_BR04_02", "Hủy 1 vé trừ đúng giá vé; hủy vé cuối -> hoàn cả combo, trả lại tồn kho combo",
+                partialOk && fullOk && Integer.parseInt(comboStatus(1).split("/")[1]) == stockBefore + 1,
+                "doanh thu " + (long) num(before, "totalRevenue") + " -> " + (long) num(mid, "totalRevenue")
+                + " -> " + (long) num(after, "totalRevenue") + "; tồn CB01 " + comboStatus(1));
+
+        // F-05: không hủy được vé khi suất chiếu đã bắt đầu (suất hôm qua)
+        String yesterday = LocalDate.now().minusDays(1) + " 10:00:00";
+        ShowtimeService.ScheduleResult past = ss.createShowtime(4, 3, yesterday, 80000);
+        int pastId = past.getShowtime().getShowtimeId();
+        BookingService.BookingResult pastOrder = bs.confirmCheckout(pastId, freeSeats(bs, pastId, 1),
+                new HashMap<>(), 2, "F", "0900000000", "POS", "CASH");
+        BookingService.BookingResult late = bs.cancelTicket(pastOrder.getTickets().get(0).getTicketCode());
+        assertCase("TC_REG_BR04_03", "Hủy vé khi suất chiếu đã bắt đầu -> TOO_LATE_TO_CANCEL",
+                "TOO_LATE_TO_CANCEL".equals(late.getCode()), late.getCode());
+
+        // F-04 + F-08: các con số báo cáo khớp nhau
+        String rep = report.buildDashboardReportJson();
+        boolean channelsOk = Math.abs(num(rep, "onlineRevenue") + num(rep, "posRevenue") - num(rep, "totalRevenue")) < 0.5;
+        boolean partsOk = Math.abs(num(rep, "seatRevenue") + num(rep, "comboRevenue") - num(rep, "totalRevenue")) < 0.5;
+        boolean movieOk = Math.abs(sumMovieRevenue(rep) - num(rep, "seatRevenue")) < 0.5;
+        assertCase("TC_REG_CSD05_02", "Online + POS = Tổng; Vé + Combo = Tổng; Σ doanh thu theo phim = doanh thu vé",
+                channelsOk && partsOk && movieOk,
+                "tổng=" + (long) num(rep, "totalRevenue") + ", vé=" + (long) num(rep, "seatRevenue")
+                + ", Σphim=" + (long) sumMovieRevenue(rep));
+
+        // F-25: mở bán lại combo đã ngừng nhưng hết hàng (CB06, tồn 0) -> OUT_OF_STOCK, không thành AVAILABLE
+        new ComboService().toggleComboStatus(6);
+        assertCase("TC_REG_F25_01", "Mở lại combo đã ngừng KD có tồn kho 0 -> OUT_OF_STOCK",
+                comboStatus(6).startsWith("OUT_OF_STOCK"), comboStatus(6));
+
+        // F-11: mật khẩu mẫu SHA-256 được băm lại sang PBKDF2 có salt sau lần đăng nhập đầu tiên
+        AuthService auth = new AuthService();
+        boolean legacy = PasswordUtils.needsUpgrade(auth.findByUsername("staff").getPasswordHash());
+        boolean firstLogin = auth.authenticate("staff", "staff123").isSuccess();
+        String newHash = auth.findByUsername("staff").getPasswordHash();
+        boolean secondLogin = auth.authenticate("staff", "staff123").isSuccess();
+        boolean wrongRejected = !auth.authenticate("staff", "staff124").isSuccess();
+        assertCase("TC_REG_SEC_01", "Băm SHA-256 cũ -> PBKDF2 có salt sau đăng nhập; vẫn đăng nhập được, sai mật khẩu bị chặn",
+                legacy && firstLogin && newHash.startsWith("pbkdf2$") && secondLogin && wrongRejected,
+                newHash.substring(0, Math.min(14, newHash.length())) + "...");
+    }
+
+    private static void runRbacTests(BookingService bookingService) throws Exception {
+        DatabaseConnection.resetDatabase();
+        CineHubApplication.startServer(RBAC_TEST_PORT);
+        try {
+            String customerToken = login("customer", "khach123");   // userId = 4
+            String otherCustomer = login("bach_hs", "khach123");    // userId = 5
+            String staffToken = login("staff", "staff123");          // STAFF
+            String managerToken = login("admin", "admin123");        // MANAGER
+
+            HttpResponse<String> r1 = call("POST", "/api/movies", null,
+                    "{\"title\":\"Phim lậu\",\"durationMinutes\":\"100\"}");
+            assertCase("TC_RBAC_01", "Thêm phim khi chưa đăng nhập -> 401 UNAUTHORIZED",
+                    r1.statusCode() == 401, "HTTP " + r1.statusCode());
+
+            HttpResponse<String> r2 = call("POST", "/api/showtimes", customerToken,
+                    "{\"movieId\":\"1\",\"auditoriumId\":\"3\",\"startTime\":\"2026-07-01 08:00:00\",\"basePrice\":\"90000\"}");
+            assertCase("TC_RBAC_02", "Khách hàng tự lập lịch chiếu -> 403 FORBIDDEN",
+                    r2.statusCode() == 403, "HTTP " + r2.statusCode());
+
+            HttpResponse<String> r3a = call("GET", "/api/reports/dashboard", staffToken, null);
+            HttpResponse<String> r3b = call("GET", "/api/reports/dashboard", managerToken, null);
+            assertCase("TC_RBAC_03", "Báo cáo doanh thu: Nhân viên -> 403, Quản lý -> 200",
+                    r3a.statusCode() == 403 && r3b.statusCode() == 200,
+                    "STAFF=" + r3a.statusCode() + ", MANAGER=" + r3b.statusCode());
+
+            int freeSeat = bookingService.getSeatMapForShowtime(1).stream()
+                    .filter(s -> "AVAILABLE".equals(s.getStatus())).findFirst().get().getShowtimeSeatId();
+            HttpResponse<String> r4 = call("POST", "/api/booking/checkout", customerToken,
+                    "{\"showtimeId\":\"1\",\"seatIds\":\"" + freeSeat + "\",\"bookingChannel\":\"POS\"}");
+            assertCase("TC_RBAC_04", "Khách hàng bán vé qua kênh POS -> 403 FORBIDDEN",
+                    r4.statusCode() == 403, "HTTP " + r4.statusCode());
+
+            // Khách #4 gửi kèm userId=5 để mạo danh -> máy chủ phải ghi nhận người giữ ghế là #4
+            HttpResponse<String> r5 = call("POST", "/api/booking/hold", customerToken,
+                    "{\"showtimeId\":\"1\",\"userId\":\"5\",\"seatIds\":\"" + freeSeat + "\"}");
+            Integer heldBy = bookingService.getSeatMapForShowtime(1).stream()
+                    .filter(s -> s.getShowtimeSeatId() == freeSeat).findFirst().get().getHeldByUserId();
+            assertCase("TC_RBAC_05", "Giữ ghế kèm userId giả mạo -> bỏ qua, dùng danh tính từ phiên (#4)",
+                    r5.statusCode() == 200 && heldBy != null && heldBy == 4,
+                    "HTTP " + r5.statusCode() + ", heldBy=" + heldBy);
+
+            HttpResponse<String> r6 = call("POST", "/api/booking/cancel", otherCustomer,
+                    "{\"ticketCode\":\"TKT-004-A04\"}");
+            assertCase("TC_RBAC_06", "Khách #5 hủy vé của khách #4 -> 403 FORBIDDEN",
+                    r6.statusCode() == 403, "HTTP " + r6.statusCode());
+
+            HttpResponse<String> r7 = call("GET", "/api/booking/tickets", customerToken, null);
+            boolean onlyOwn = r7.statusCode() == 200 && r7.body().contains("TKT-004-A04")
+                    && !r7.body().contains("TKT-002-") && !r7.body().contains("TKT-003-");
+            assertCase("TC_RBAC_07", "Khách hàng xem danh sách vé -> chỉ thấy vé của chính mình",
+                    onlyOwn, "HTTP " + r7.statusCode());
+
+            HttpResponse<String> r8a = call("POST", "/api/booking/checkin", customerToken,
+                    "{\"code\":\"TKT-004-A05\"}");
+            HttpResponse<String> r8b = call("POST", "/api/booking/checkin", staffToken,
+                    "{\"code\":\"TKT-004-A05\"}");
+            assertCase("TC_RBAC_08", "Soát vé QR: Khách hàng -> 403, Nhân viên -> CHECKIN_SUCCESS",
+                    r8a.statusCode() == 403 && r8b.body().contains("CHECKIN_SUCCESS"),
+                    "CUSTOMER=" + r8a.statusCode() + ", STAFF=" + r8b.statusCode());
+
+            HttpResponse<String> r10a = call("GET", "/api/auth/me", customerToken, null);
+            HttpResponse<String> r10b = call("GET", "/api/auth/me", null, null);
+            assertCase("TC_RBAC_10", "Kiểm tra phiên /api/auth/me: có token -> 200 đúng người, không token -> 401",
+                    r10a.statusCode() == 200 && r10a.body().contains("\"username\":\"customer\"")
+                            && r10b.statusCode() == 401,
+                    "WITH=" + r10a.statusCode() + ", WITHOUT=" + r10b.statusCode());
+
+            call("POST", "/api/auth/logout", customerToken, "");
+            HttpResponse<String> r9 = call("GET", "/api/booking/tickets", customerToken, null);
+            assertCase("TC_RBAC_09", "Dùng lại mã phiên sau khi đăng xuất -> 401 UNAUTHORIZED",
+                    r9.statusCode() == 401, "HTTP " + r9.statusCode());
+        } finally {
+            CineHubApplication.stopServer();
+        }
+    }
+
+    private static String login(String username, String password) throws Exception {
+        HttpResponse<String> resp = call("POST", "/api/auth/login", null,
+                "{\"username\":\"" + username + "\",\"password\":\"" + password + "\"}");
+        Matcher m = Pattern.compile("\"token\":\"([^\"]+)\"").matcher(resp.body());
+        if (!m.find()) {
+            throw new IllegalStateException("Không đăng nhập được tài khoản " + username + ": " + resp.body());
+        }
+        return m.group(1);
+    }
+
+    private static HttpResponse<String> call(String method, String path, String token, String body)
+            throws Exception {
+        HttpRequest.Builder builder = HttpRequest.newBuilder(
+                URI.create("http://localhost:" + RBAC_TEST_PORT + path));
+        if (token != null) {
+            builder.header("Authorization", "Bearer " + token);
+        }
+        if ("POST".equals(method)) {
+            builder.header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(body == null ? "" : body, StandardCharsets.UTF_8));
+        } else {
+            builder.GET();
+        }
+        return HTTP.send(builder.build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
     }
 
     private static void assertCase(String testId, String description, boolean condition, String actualOutput) {

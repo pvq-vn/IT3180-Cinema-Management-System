@@ -19,6 +19,15 @@ public class AuthController extends BaseController implements HttpHandler {
 
     private final AuthService authService = new AuthService();
 
+    private String userToJson(User u) {
+        return "{\"userId\":" + u.getUserId()
+                + ",\"username\":\"" + JsonUtils.escape(u.getUsername()) + "\""
+                + ",\"fullName\":\"" + JsonUtils.escape(u.getFullName()) + "\""
+                + ",\"email\":\"" + JsonUtils.escape(u.getEmail()) + "\""
+                + ",\"phone\":\"" + JsonUtils.escape(u.getPhone()) + "\""
+                + ",\"role\":\"" + JsonUtils.escape(u.getRole()) + "\"}";
+    }
+
     @Override
     public void handle(HttpExchange exchange) throws IOException {
         String path = exchange.getRequestURI().getPath();
@@ -35,29 +44,31 @@ public class AuthController extends BaseController implements HttpHandler {
                     sendJson(exchange, 200, JsonUtils.statusResponse(false, res.getStatusCode(), res.getMessage()));
                     return;
                 }
-                User u = res.getUser();
                 String json = "{\"success\":true"
                         + ",\"code\":\"" + JsonUtils.escape(res.getStatusCode()) + "\""
                         + ",\"message\":\"" + JsonUtils.escape(res.getMessage()) + "\""
                         + ",\"token\":\"" + JsonUtils.escape(res.getSessionToken()) + "\""
-                        + ",\"user\":{"
-                        + "\"userId\":" + u.getUserId()
-                        + ",\"username\":\"" + JsonUtils.escape(u.getUsername()) + "\""
-                        + ",\"fullName\":\"" + JsonUtils.escape(u.getFullName()) + "\""
-                        + ",\"email\":\"" + JsonUtils.escape(u.getEmail()) + "\""
-                        + ",\"phone\":\"" + JsonUtils.escape(u.getPhone()) + "\""
-                        + ",\"role\":\"" + JsonUtils.escape(u.getRole()) + "\""
-                        + "}}";
+                        + ",\"user\":" + userToJson(res.getUser()) + "}";
                 sendJson(exchange, 200, json);
+            } else if (path.endsWith("/me") && "GET".equalsIgnoreCase(method)) {
+                // Kiểm tra mã phiên còn hiệu lực (trình duyệt gọi khi tải lại trang)
+                User user = requireLogin(exchange);
+                if (user == null) {
+                    return;
+                }
+                sendJson(exchange, 200, "{\"success\":true,\"user\":" + userToJson(user) + "}");
             } else if (path.endsWith("/logout") && "POST".equalsIgnoreCase(method)) {
-                Map<String, String> body = JsonUtils.parseFlatObject(readRequestBody(exchange));
-                SessionManager.invalidateSession(body.get("token"));
+                String token = extractToken(exchange);
+                if (token == null) {
+                    token = JsonUtils.parseFlatObject(readRequestBody(exchange)).get("token");
+                }
+                SessionManager.invalidateSession(token);
                 sendJson(exchange, 200, JsonUtils.statusResponse(true, "LOGGED_OUT", "Đã đăng xuất khỏi hệ thống."));
             } else {
                 sendError(exchange, 405, "METHOD_NOT_ALLOWED", "Phương thức HTTP không được hỗ trợ.");
             }
         } catch (Exception ex) {
-            sendError(exchange, 500, "SERVER_ERROR", ex.getMessage());
+            handleException(exchange, ex);
         }
     }
 }

@@ -64,6 +64,10 @@ public class MovieController extends BaseController implements HttpHandler {
                 sb.append("]");
                 sendJson(exchange, 200, sb.toString());
             } else if ("POST".equalsIgnoreCase(method)) {
+                // RBAC: chỉ Quản lý rạp được thêm/sửa/ngừng chiếu phim
+                if (requireRole(exchange, ROLE_MANAGER) == null) {
+                    return;
+                }
                 Map<String, String> body = JsonUtils.parseFlatObject(readRequestBody(exchange));
                 String action = body.getOrDefault("action", "save");
                 if ("delete".equalsIgnoreCase(action)) {
@@ -90,10 +94,8 @@ public class MovieController extends BaseController implements HttpHandler {
             } else {
                 sendError(exchange, 405, "METHOD_NOT_ALLOWED", "Phương thức không được hỗ trợ.");
             }
-        } catch (IllegalArgumentException ex) {
-            sendError(exchange, 200, "VALIDATION_ERROR", ex.getMessage());
         } catch (Exception ex) {
-            sendError(exchange, 500, "SERVER_ERROR", ex.getMessage());
+            handleException(exchange, ex);
         }
     }
 

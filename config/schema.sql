@@ -2,7 +2,10 @@
 -- CINEHUB CINEMA MANAGEMENT & TICKET BOOKING SYSTEM (CMS)
 -- Học phần: IT3180 - Nhập môn Công nghệ phần mềm (Nhóm 3 - CineHub)
 -- Giảng viên hướng dẫn: TS. Nguyễn Nhất Hải
--- Tập tin: config/schema.sql (DDL khởi tạo 9 bảng cơ sở dữ liệu quan hệ 3NF)
+-- Tập tin: config/schema.sql (DDL khởi tạo 10 bảng cơ sở dữ liệu quan hệ)
+-- Thiết kế theo 3NF, trừ một số cột lưu "ảnh chụp" (snapshot) có chủ đích để giữ đúng lịch sử giao dịch:
+--   tickets.seat_code/seat_type/showtime_id/ticket_price, invoices.combo_summary, showtime_seats.final_price,
+--   auditoriums.total_seats (= total_rows x seats_per_row).
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS users (
@@ -62,7 +65,7 @@ CREATE TABLE IF NOT EXISTS showtimes (
     start_time TIMESTAMP NOT NULL,
     end_time TIMESTAMP NOT NULL,
     base_price DECIMAL(12, 2) NOT NULL,
-    status VARCHAR(20) NOT NULL DEFAULT 'SCHEDULED', -- SCHEDULED, CANCELLED, COMPLETED
+    status VARCHAR(20) NOT NULL DEFAULT 'SCHEDULED', -- SCHEDULED (CANCELLED, COMPLETED: dự phòng, chưa có chức năng chuyển)
     CONSTRAINT fk_showtimes_movie FOREIGN KEY (movie_id) REFERENCES movies(movie_id),
     CONSTRAINT fk_showtimes_auditorium FOREIGN KEY (auditorium_id) REFERENCES auditoriums(auditorium_id)
 );
@@ -78,6 +81,7 @@ CREATE TABLE IF NOT EXISTS showtime_seats (
     final_price DECIMAL(12, 2) NOT NULL,
     CONSTRAINT fk_ss_showtime FOREIGN KEY (showtime_id) REFERENCES showtimes(showtime_id) ON DELETE CASCADE,
     CONSTRAINT fk_ss_seat FOREIGN KEY (seat_id) REFERENCES seats(seat_id),
+    CONSTRAINT fk_ss_held_by FOREIGN KEY (held_by_user_id) REFERENCES users(user_id),
     CONSTRAINT uq_showtime_seat UNIQUE (showtime_id, seat_id)
 );
 
@@ -109,9 +113,11 @@ CREATE TABLE IF NOT EXISTS invoices (
     discount_amount DECIMAL(12, 2) NOT NULL DEFAULT 0,
     total_amount DECIMAL(12, 2) NOT NULL DEFAULT 0,
     combo_summary VARCHAR(255),
-    payment_status VARCHAR(20) NOT NULL DEFAULT 'PAID',    -- PENDING, PAID, REFUNDED
+    payment_status VARCHAR(20) NOT NULL DEFAULT 'PAID',    -- PAID, REFUNDED (hủy hết vé); PENDING: dự phòng
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_invoices_showtime FOREIGN KEY (showtime_id) REFERENCES showtimes(showtime_id)
+    CONSTRAINT fk_invoices_showtime FOREIGN KEY (showtime_id) REFERENCES showtimes(showtime_id),
+    CONSTRAINT fk_invoices_user FOREIGN KEY (user_id) REFERENCES users(user_id),
+    CONSTRAINT fk_invoices_staff FOREIGN KEY (staff_id) REFERENCES users(user_id)
 );
 
 -- Chi tiết Combo trong Hóa đơn
@@ -142,6 +148,7 @@ CREATE TABLE IF NOT EXISTS tickets (
     checked_in_by INT NULL,
     CONSTRAINT fk_tickets_invoice FOREIGN KEY (invoice_id) REFERENCES invoices(invoice_id) ON DELETE CASCADE,
     CONSTRAINT fk_tickets_showtime FOREIGN KEY (showtime_id) REFERENCES showtimes(showtime_id),
-    CONSTRAINT fk_tickets_ss FOREIGN KEY (showtime_seat_id) REFERENCES showtime_seats(showtime_seat_id)
+    CONSTRAINT fk_tickets_ss FOREIGN KEY (showtime_seat_id) REFERENCES showtime_seats(showtime_seat_id),
+    CONSTRAINT fk_tickets_checked_by FOREIGN KEY (checked_in_by) REFERENCES users(user_id)
 );
 

@@ -22,11 +22,15 @@ public class ReportController extends BaseController implements HttpHandler {
             sendError(exchange, 405, "METHOD_NOT_ALLOWED", "Chỉ hỗ trợ phương thức GET.");
             return;
         }
+        // RBAC: báo cáo doanh thu chỉ dành cho Quản lý rạp
+        if (requireRole(exchange, ROLE_MANAGER) == null) {
+            return;
+        }
         try {
             String json = reportService.buildDashboardReportJson();
             sendJson(exchange, 200, json);
         } catch (Exception ex) {
-            sendError(exchange, 500, "REPORT_ERROR", ex.getMessage());
+            handleException(exchange, ex);
         }
     }
 }

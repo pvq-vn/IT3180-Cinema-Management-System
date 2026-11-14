@@ -1,0 +1,16 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "cinehub",
+      "runtimeExecutable": "java",
+      "runtimeArgs": [
+        "-Dfile.encoding=UTF-8",
+        "-cp",
+        "out;C:\\Users\\vuvie\\.m2\\repository\\com\\h2database\\h2\\1.4.200\\h2-1.4.200.jar",
+        "com.cinehub.CineHubApplication"
+      ],
+      "port": 8080
+    }
+  ]
+}

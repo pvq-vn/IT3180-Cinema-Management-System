@@ -5,16 +5,20 @@ import com.cinehub.models.Invoice;
 import com.cinehub.models.SeatPricingPolicy;
 import com.cinehub.models.ShowtimeSeat;
 import com.cinehub.models.Ticket;
+import com.cinehub.utils.AppConfig;
 import com.cinehub.utils.DatabaseConnection;
 import com.cinehub.utils.PasswordUtils;
+import java.security.SecureRandom;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -30,11 +34,24 @@ import java.util.Map;
  */
 public class BookingService {
 
-    /** Thời gian khóa ghế tạm thời theo quy tắc BR03 (5 phút). */
-    public static final int HOLD_DURATION_MINUTES = 5;
+    /** Thời gian khóa ghế tạm thời theo quy tắc BR03 (mặc định 5 phút, cấu hình booking.hold.minutes). */
+    public static final int HOLD_DURATION_MINUTES = AppConfig.getInt("booking.hold.minutes", 5);
+
+    /** Số ghế tối đa trong một lần giữ ghế hoặc một hóa đơn. */
+    public static final int MAX_SEATS_PER_ORDER = 8;
+
+    /** Kênh bán hợp lệ (báo cáo doanh thu Online + POS phải cộng đúng bằng tổng). */
+    private static final List<String> CHANNELS = List.of("ONLINE", "POS");
+    /** Phương thức thanh toán hợp lệ cho kênh Online. */
+    private static final List<String> ONLINE_PAYMENTS = List.of("VIETQR", "E_WALLET", "CARD");
+    /** Phương thức thanh toán hợp lệ tại quầy POS. */
+    private static final List<String> POS_PAYMENTS = List.of("CASH", "VIETQR", "CARD");
 
     private static final DateTimeFormatter TS_FMT =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final DateTimeFormatter INV_FMT = DateTimeFormatter.ofPattern("yyMMddHHmmss");
+    private static final DateTimeFormatter VN_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     /** Khóa đồng bộ mức tiến trình để đảm bảo tuần tự hóa việc giữ ghế và thanh toán (R01). */
     private static final Object SEAT_LOCK_MONITOR = new Object();
@@ -171,10 +188,11 @@ public class BookingService {
      * @param userId          Mã người dùng thực hiện giữ ghế
      * @return Đối tượng {@link BookingResult}
      */
-    public BookingResult holdSeats(int showtimeId, List<Integer> showtimeSeatIds, int userId) {
+    public BookingResult holdSeats(int showtimeId, List<Integer> requestedSeatIds, int userId) {
         synchronized (SEAT_LOCK_MONITOR) {
+            List<Integer> showtimeSeatIds = distinct(requestedSeatIds);
             // [Node 1] Kiểm tra điều kiện biên của danh sách ghế chọn
-            if (showtimeId <= 0 || showtimeSeatIds == null || showtimeSeatIds.isEmpty() || showtimeSeatIds.size() > 8) {
+            if (showtimeId <= 0 || showtimeSeatIds.isEmpty() || showtimeSeatIds.size() > MAX_SEATS_PER_ORDER) {
                 // [Node 2] Trả về lỗi số lượng ghế chọn không hợp lệ
                 return new BookingResult(false, "INVALID_SELECTION",
                         "Vui lòng chọn từ 1 đến tối đa 8 ghế trong một lần giao dịch.", null, null, null);
@@ -190,8 +208,10 @@ public class BookingService {
                     String checkSql = "SELECT ss.status, ss.held_by_user_id, s.seat_code "
                             + "FROM showtime_seats ss JOIN seats s ON ss.seat_id = s.seat_id "
                             + "WHERE ss.showtime_id = ? AND ss.showtime_seat_id = ?";
+                    // UPDATE có điều kiện: CSDL tự từ chối nếu ghế vừa đổi trạng thái (an toàn cả khi chạy nhiều tiến trình)
                     String updateSql = "UPDATE showtime_seats SET status = 'HELD', held_by_user_id = ?, locked_until = ? "
-                            + "WHERE showtime_seat_id = ?";
+                            + "WHERE showtime_seat_id = ? AND (status = 'AVAILABLE' "
+                            + "OR (status = 'HELD' AND held_by_user_id = ?))";
 
                     try (PreparedStatement psCheck = conn.prepareStatement(checkSql);
                          PreparedStatement psUpdate = conn.prepareStatement(updateSql)) {
@@ -221,19 +241,25 @@ public class BookingService {
                                             null, null, null);
                                 }
                             }
-                            // [Node 7] Khóa ghế tạm thời 5 phút cho người dùng hiện tại
+                            // [Node 7] Khóa ghế tạm thời cho người dùng hiện tại
                             psUpdate.setInt(1, userId);
                             psUpdate.setString(2, lockedUntil);
                             psUpdate.setInt(3, ssId);
-                            psUpdate.addBatch();
+                            psUpdate.setInt(4, userId);
+                            if (psUpdate.executeUpdate() != 1) {
+                                conn.rollback();
+                                return new BookingResult(false, "SEAT_ALREADY_TAKEN",
+                                        "Ghế vừa được khách hàng khác giữ hoặc đặt mua. Vui lòng chọn ghế khác!",
+                                        null, null, null);
+                            }
                         }
-                        psUpdate.executeBatch();
                     }
 
                     // [Node 8] Xác nhận giao dịch giữ ghế thành công
                     conn.commit();
                     return new BookingResult(true, "HELD_SUCCESS",
-                            "Đã giữ tạm thời " + showtimeSeatIds.size() + " ghế trong 5 phút (đến " + lockedUntil + ").",
+                            "Đã giữ tạm thời " + showtimeSeatIds.size() + " ghế trong " + HOLD_DURATION_MINUTES
+                            + " phút (đến " + lockedUntil + ").",
                             lockedUntil, null, null);
                 } catch (SQLException ex) {
                     conn.rollback();
@@ -263,19 +289,36 @@ public class BookingService {
      * @param paymentMethod   Phương thức thanh toán (VIETQR, CASH, CARD, E_WALLET)
      * @return Đối tượng {@link BookingResult} chứa Hóa đơn và Danh sách Vé điện tử QR
      */
-    public BookingResult confirmCheckout(int showtimeId, List<Integer> showtimeSeatIds,
+    public BookingResult confirmCheckout(int showtimeId, List<Integer> requestedSeatIds,
                                          Map<Integer, Integer> comboQuantities,
                                          int userId, String customerName, String customerPhone,
                                          String bookingChannel, String paymentMethod) {
         synchronized (SEAT_LOCK_MONITOR) {
-            if (showtimeId <= 0 || showtimeSeatIds == null || showtimeSeatIds.isEmpty()) {
+            List<Integer> showtimeSeatIds = distinct(requestedSeatIds);
+            if (showtimeId <= 0 || showtimeSeatIds.isEmpty()) {
                 return new BookingResult(false, "EMPTY_CART",
                         "Vui lòng chọn ít nhất 1 ghế trước khi thanh toán.", null, null, null);
             }
-            releaseExpiredHolds();
+            if (showtimeSeatIds.size() > MAX_SEATS_PER_ORDER) {
+                return new BookingResult(false, "INVALID_SELECTION",
+                        "Mỗi hóa đơn được mua tối đa " + MAX_SEATS_PER_ORDER + " ghế.", null, null, null);
+            }
 
             String channel = PasswordUtils.isBlank(bookingChannel) ? "ONLINE" : bookingChannel.trim().toUpperCase();
             String payMethod = PasswordUtils.isBlank(paymentMethod) ? "VIETQR" : paymentMethod.trim().toUpperCase();
+            // Chỉ nhận đúng 2 kênh để báo cáo Online + POS luôn bằng tổng doanh thu
+            if (!CHANNELS.contains(channel)) {
+                return new BookingResult(false, "INVALID_CHANNEL",
+                        "Kênh bán '" + channel + "' không hợp lệ (chỉ ONLINE hoặc POS).", null, null, null);
+            }
+            List<String> allowedPayments = "POS".equals(channel) ? POS_PAYMENTS : ONLINE_PAYMENTS;
+            if (!allowedPayments.contains(payMethod)) {
+                return new BookingResult(false, "INVALID_PAYMENT_METHOD",
+                        "Phương thức thanh toán '" + payMethod + "' không áp dụng cho kênh " + channel + ".",
+                        null, null, null);
+            }
+            releaseExpiredHolds();
+
             String custName = PasswordUtils.isBlank(customerName) ? "Khách hàng CineHub" : customerName.trim();
             String custPhone = PasswordUtils.isBlank(customerPhone) ? "0900000000" : customerPhone.trim();
 
@@ -334,8 +377,20 @@ public class BookingService {
                                 Integer heldBy = rs.getObject("held_by_user_id") != null
                                         ? rs.getInt("held_by_user_id") : null;
 
-                                boolean validForCheckout = "AVAILABLE".equalsIgnoreCase(status)
-                                        || ("HELD".equalsIgnoreCase(status) && (heldBy == null || heldBy == userId));
+                                boolean heldByMe = "HELD".equalsIgnoreCase(status) && heldBy != null && heldBy == userId;
+                                // BR03: Online phải giữ ghế trước; POS bán trực tiếp ghế trống tại quầy
+                                if ("ONLINE".equals(channel) && !heldByMe) {
+                                    conn.rollback();
+                                    boolean takenByOther = "BOOKED".equalsIgnoreCase(status)
+                                            || "HELD".equalsIgnoreCase(status);
+                                    return new BookingResult(false, takenByOther ? "SEAT_CONFLICT" : "SEAT_NOT_HELD",
+                                            takenByOther
+                                                    ? "Ghế " + seatCode + " đã được khách khác thanh toán hoặc đang được giữ."
+                                                    : "Ghế " + seatCode + " chưa được giữ cho bạn hoặc đã hết "
+                                                    + HOLD_DURATION_MINUTES + " phút giữ chỗ. Vui lòng giữ ghế lại.",
+                                            null, null, null);
+                                }
+                                boolean validForCheckout = "AVAILABLE".equalsIgnoreCase(status) || heldByMe;
                                 if (!validForCheckout) {
                                     conn.rollback();
                                     return new BookingResult(false, "SEAT_CONFLICT",
@@ -414,7 +469,7 @@ public class BookingService {
                     double totalAmount = seatTotal + comboTotal;
 
                     // 4. Tạo bản ghi Hóa đơn (Invoice)
-                    String invoiceCode = "INV-" + System.currentTimeMillis() % 1000000;
+                    String invoiceCode = newInvoiceCode();
                     int invoiceId;
                     String insertInv = "INSERT INTO invoices (invoice_code, user_id, customer_name, customer_phone, "
                             + "staff_id, showtime_id, booking_channel, payment_method, seat_total, combo_total, "
@@ -447,7 +502,10 @@ public class BookingService {
                     // 5. Lưu chi tiết Combo và trừ tồn kho
                     String insertIC = "INSERT INTO invoice_combos (invoice_id, combo_id, quantity, unit_price, subtotal) "
                             + "VALUES (?, ?, ?, ?, ?)";
-                    String deductStock = "UPDATE combos SET stock_quantity = stock_quantity - ? WHERE combo_id = ?";
+                    // Trừ tồn kho có điều kiện; hết hàng thì tự chuyển OUT_OF_STOCK
+                    String deductStock = "UPDATE combos SET stock_quantity = stock_quantity - ?, "
+                            + "status = CASE WHEN stock_quantity - ? <= 0 THEN 'OUT_OF_STOCK' ELSE status END "
+                            + "WHERE combo_id = ? AND stock_quantity >= ?";
                     try (PreparedStatement psIC = conn.prepareStatement(insertIC);
                          PreparedStatement psStock = conn.prepareStatement(deductStock)) {
                         for (SeatPricingPolicy.ComboOrderItem item : comboItems) {
@@ -457,20 +515,25 @@ public class BookingService {
                                 psIC.setInt(3, item.getQuantity());
                                 psIC.setDouble(4, item.getCombo().getPrice());
                                 psIC.setDouble(5, item.getSubtotal());
-                                psIC.addBatch();
+                                psIC.executeUpdate();
 
                                 psStock.setInt(1, item.getQuantity());
-                                psStock.setInt(2, item.getCombo().getComboId());
-                                psStock.addBatch();
+                                psStock.setInt(2, item.getQuantity());
+                                psStock.setInt(3, item.getCombo().getComboId());
+                                psStock.setInt(4, item.getQuantity());
+                                if (psStock.executeUpdate() != 1) {
+                                    conn.rollback();
+                                    return new BookingResult(false, "COMBO_OUT_OF_STOCK",
+                                            "Combo '" + item.getCombo().getName() + "' vừa hết hàng.", null, null, null);
+                                }
                             }
                         }
-                        psIC.executeBatch();
-                        psStock.executeBatch();
                     }
 
-                    // 6. Cập nhật ghế sang BOOKED và phát hành Vé điện tử QR (Tickets)
+                    // 6. Cập nhật ghế sang BOOKED (UPDATE có điều kiện chống bán trùng - R01) và phát hành vé QR
                     String updateSeat = "UPDATE showtime_seats SET status = 'BOOKED', held_by_user_id = NULL, "
-                            + "locked_until = NULL WHERE showtime_seat_id = ?";
+                            + "locked_until = NULL WHERE showtime_seat_id = ? AND (status = 'AVAILABLE' "
+                            + "OR (status = 'HELD' AND held_by_user_id = ?))";
                     String insertTkt = "INSERT INTO tickets (ticket_code, qr_payload, invoice_id, showtime_id, "
                             + "showtime_seat_id, seat_code, seat_type, ticket_price, ticket_status) "
                             + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'ISSUED')";
@@ -485,7 +548,12 @@ public class BookingService {
                             double sPrice = seatPrices.get(i);
 
                             psSeat.setInt(1, ssId);
-                            psSeat.executeUpdate();
+                            psSeat.setInt(2, userId);
+                            if (psSeat.executeUpdate() != 1) {
+                                conn.rollback();
+                                return new BookingResult(false, "SEAT_CONFLICT",
+                                        "Ghế " + sCode + " vừa được khách khác thanh toán.", null, null, null);
+                            }
 
                             String ticketCode = String.format("TKT-%03d-%s", invoiceId, sCode);
                             String qrPayload = "CINEHUB|QR|" + ticketCode + "|SHOW" + showtimeId + "|" + sCode;
@@ -609,18 +677,37 @@ public class BookingService {
                     list.add(t);
                     return new BookingResult(false, "ALREADY_CHECKED_IN",
                             "CẢNH BÁO TRÙNG VÉ: Vé " + t.getTicketCode() + " (Ghế " + t.getSeatCode()
-                            + ") đã được soát vào lúc " + t.getCheckedInAt() + "!",
+                            + ") đã được soát lúc " + formatViTime(t.getCheckedInAt()) + "!",
+                            null, null, list);
+                }
+
+                // Vé chỉ có giá trị trong ngày chiếu của suất (chặn vé ngày khác)
+                String showDate = t.getStartTime() != null && t.getStartTime().length() >= 10
+                        ? t.getStartTime().substring(0, 10) : "";
+                if (!LocalDate.now().toString().equals(showDate)) {
+                    List<Ticket> list = new ArrayList<>();
+                    list.add(t);
+                    return new BookingResult(false, "WRONG_DAY",
+                            "TỪ CHỐI: Vé " + t.getTicketCode() + " dành cho suất chiếu lúc "
+                            + formatViTime(t.getStartTime()) + ", không phải hôm nay.",
                             null, null, list);
                 }
 
                 String checkedInTime = LocalDateTime.now().format(TS_FMT);
+                // UPDATE có điều kiện: 2 máy quét cùng lúc chỉ 1 máy thành công
                 try (PreparedStatement psUpd = conn.prepareStatement(
                         "UPDATE tickets SET ticket_status = 'CHECKED_IN', checked_in_at = ?, checked_in_by = ? "
-                        + "WHERE ticket_id = ?")) {
+                        + "WHERE ticket_id = ? AND ticket_status = 'ISSUED'")) {
                     psUpd.setString(1, checkedInTime);
                     psUpd.setInt(2, staffId);
                     psUpd.setInt(3, t.getTicketId());
-                    psUpd.executeUpdate();
+                    if (psUpd.executeUpdate() != 1) {
+                        List<Ticket> list = new ArrayList<>();
+                        list.add(t);
+                        return new BookingResult(false, "ALREADY_CHECKED_IN",
+                                "CẢNH BÁO TRÙNG VÉ: Vé " + t.getTicketCode() + " vừa được soát ở cửa khác!",
+                                null, null, list);
+                    }
                 }
                 t.setTicketStatus("CHECKED_IN");
                 t.setCheckedInAt(checkedInTime);
@@ -654,10 +741,16 @@ public class BookingService {
                 try {
                     int ticketId;
                     int ssId;
+                    int invoiceId;
+                    double ticketPrice;
                     String status;
                     String seatCode;
+                    String startTime;
                     try (PreparedStatement ps = conn.prepareStatement(
-                            "SELECT ticket_id, showtime_seat_id, ticket_status, seat_code FROM tickets WHERE UPPER(ticket_code) = UPPER(?)")) {
+                            "SELECT t.ticket_id, t.showtime_seat_id, t.invoice_id, t.ticket_price, t.ticket_status, "
+                            + "t.seat_code, st.start_time FROM tickets t "
+                            + "JOIN showtimes st ON t.showtime_id = st.showtime_id "
+                            + "WHERE UPPER(t.ticket_code) = UPPER(?)")) {
                         ps.setString(1, ticketCode.trim());
                         try (ResultSet rs = ps.executeQuery()) {
                             if (!rs.next()) {
@@ -667,8 +760,11 @@ public class BookingService {
                             }
                             ticketId = rs.getInt("ticket_id");
                             ssId = rs.getInt("showtime_seat_id");
+                            invoiceId = rs.getInt("invoice_id");
+                            ticketPrice = rs.getDouble("ticket_price");
                             status = rs.getString("ticket_status");
                             seatCode = rs.getString("seat_code");
+                            startTime = rs.getString("start_time");
                         }
                     }
 
@@ -679,19 +775,35 @@ public class BookingService {
                                 null, null, null);
                     }
 
+                    // BR04: chỉ hủy được trước giờ chiếu
+                    LocalDateTime start = parseTimestamp(startTime);
+                    if (start != null && !LocalDateTime.now().isBefore(start)) {
+                        conn.rollback();
+                        return new BookingResult(false, "TOO_LATE_TO_CANCEL",
+                                "Suất chiếu đã bắt đầu lúc " + start.format(VN_FMT)
+                                + ", không thể hủy vé " + ticketCode + ".", null, null, null);
+                    }
+
                     try (PreparedStatement ps1 = conn.prepareStatement(
-                            "UPDATE tickets SET ticket_status = 'CANCELLED' WHERE ticket_id = ?");
+                            "UPDATE tickets SET ticket_status = 'CANCELLED' WHERE ticket_id = ? AND ticket_status = 'ISSUED'");
                          PreparedStatement ps2 = conn.prepareStatement(
                             "UPDATE showtime_seats SET status = 'AVAILABLE', held_by_user_id = NULL, locked_until = NULL WHERE showtime_seat_id = ?")) {
                         ps1.setInt(1, ticketId);
-                        ps1.executeUpdate();
+                        if (ps1.executeUpdate() != 1) {
+                            conn.rollback();
+                            return new BookingResult(false, "CANNOT_CANCEL",
+                                    "Vé " + ticketCode + " vừa đổi trạng thái, vui lòng tải lại.", null, null, null);
+                        }
                         ps2.setInt(1, ssId);
                         ps2.executeUpdate();
                     }
 
+                    // Hoàn tiền vé vào hóa đơn để báo cáo doanh thu phản ánh đúng số đã thu
+                    String refundNote = refundTicketOnInvoice(conn, invoiceId, ticketPrice);
+
                     conn.commit();
                     return new BookingResult(true, "CANCEL_SUCCESS",
-                            "Đã hủy vé " + ticketCode + " và giải phóng ghế " + seatCode + " về trạng thái Trống (AVAILABLE).",
+                            "Đã hủy vé " + ticketCode + ", trả ghế " + seatCode + " về trạng thái trống. " + refundNote,
                             null, null, null);
                 } catch (SQLException ex) {
                     conn.rollback();
@@ -711,6 +823,47 @@ public class BookingService {
      * @return Danh sách {@link Ticket}
      */
     public List<Ticket> getAllTickets() {
+        return queryTickets(null);
+    }
+
+    /**
+     * Lấy danh sách Vé điện tử thuộc các hóa đơn của một khách hàng (phục vụ RBAC: khách hàng
+     * chỉ được xem vé của chính mình).
+     *
+     * @param userId Mã người dùng sở hữu hóa đơn
+     * @return Danh sách {@link Ticket}
+     */
+    public List<Ticket> getTicketsByUser(int userId) {
+        return queryTickets(userId);
+    }
+
+    /**
+     * Tra cứu mã người dùng sở hữu hóa đơn chứa vé (phục vụ kiểm tra quyền hủy vé).
+     *
+     * @param ticketCode Mã vé
+     * @return Mã người dùng sở hữu, hoặc null nếu vé không tồn tại hoặc hóa đơn không gắn tài khoản
+     */
+    public Integer getTicketOwnerUserId(String ticketCode) {
+        if (PasswordUtils.isBlank(ticketCode)) {
+            return null;
+        }
+        String sql = "SELECT i.user_id FROM tickets t JOIN invoices i ON t.invoice_id = i.invoice_id "
+                + "WHERE UPPER(t.ticket_code) = UPPER(?)";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, ticketCode.trim());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next() && rs.getObject("user_id") != null) {
+                    return rs.getInt("user_id");
+                }
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("Lỗi tra cứu chủ sở hữu vé: " + ex.getMessage(), ex);
+        }
+        return null;
+    }
+
+    private List<Ticket> queryTickets(Integer ownerUserId) {
         List<Ticket> tickets = new ArrayList<>();
         String sql = "SELECT t.ticket_id, t.ticket_code, t.qr_payload, t.invoice_id, i.invoice_code, "
                 + "i.customer_name, t.showtime_id, t.showtime_seat_id, t.seat_code, t.seat_type, "
@@ -721,17 +874,99 @@ public class BookingService {
                 + "JOIN showtimes st ON t.showtime_id = st.showtime_id "
                 + "JOIN movies m ON st.movie_id = m.movie_id "
                 + "JOIN auditoriums a ON st.auditorium_id = a.auditorium_id "
+                + (ownerUserId != null ? "WHERE i.user_id = ? " : "")
                 + "ORDER BY t.ticket_id DESC";
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                tickets.add(mapRowToTicket(rs));
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            if (ownerUserId != null) {
+                ps.setInt(1, ownerUserId);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    tickets.add(mapRowToTicket(rs));
+                }
             }
         } catch (SQLException ex) {
             throw new IllegalStateException("Lỗi truy vấn danh sách vé: " + ex.getMessage(), ex);
         }
         return tickets;
+    }
+
+    /** Đổi "yyyy-MM-dd HH:mm:ss" sang kiểu hiển thị Việt Nam "dd/MM HH:mm". */
+    /** Loại ghế trùng trong danh sách gửi lên, giữ nguyên thứ tự. */
+    private static List<Integer> distinct(List<Integer> ids) {
+        return ids == null ? new ArrayList<>() : new ArrayList<>(new LinkedHashSet<>(ids));
+    }
+
+    /** Mã hóa đơn duy nhất: INV-yyMMddHHmmss-XXXX (thời điểm + 4 ký tự hex ngẫu nhiên). */
+    private static String newInvoiceCode() {
+        return "INV-" + LocalDateTime.now().format(INV_FMT) + "-"
+                + String.format("%04X", RANDOM.nextInt(0x10000));
+    }
+
+    private static LocalDateTime parseTimestamp(String ts) {
+        if (ts == null || ts.length() < 19) {
+            return null;
+        }
+        try {
+            return LocalDateTime.parse(ts.substring(0, 19), TS_FMT);
+        } catch (java.time.format.DateTimeParseException ex) {
+            return null;
+        }
+    }
+
+    /**
+     * Trừ tiền vé đã hủy khỏi hóa đơn. Khi mọi vé của hóa đơn đều đã hủy, hóa đơn chuyển REFUNDED
+     * (hoàn cả tiền combo, trả lại tồn kho combo) và không còn được tính vào doanh thu.
+     */
+    private String refundTicketOnInvoice(Connection conn, int invoiceId, double ticketPrice) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(
+                "UPDATE invoices SET seat_total = seat_total - ?, total_amount = total_amount - ? WHERE invoice_id = ?")) {
+            ps.setDouble(1, ticketPrice);
+            ps.setDouble(2, ticketPrice);
+            ps.setInt(3, invoiceId);
+            ps.executeUpdate();
+        }
+        int remaining;
+        try (PreparedStatement ps = conn.prepareStatement(
+                "SELECT COUNT(*) FROM tickets WHERE invoice_id = ? AND ticket_status <> 'CANCELLED'")) {
+            ps.setInt(1, invoiceId);
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                remaining = rs.getInt(1);
+            }
+        }
+        String refund = "Hoàn " + String.format(java.util.Locale.US, "%,.0f", ticketPrice).replace(',', '.') + " ₫ tiền vé.";
+        if (remaining == 0) {
+            try (PreparedStatement psStock = conn.prepareStatement(
+                    "UPDATE combos SET stock_quantity = stock_quantity + ?, "
+                    + "status = CASE WHEN status = 'OUT_OF_STOCK' THEN 'AVAILABLE' ELSE status END WHERE combo_id = ?");
+                 PreparedStatement psItems = conn.prepareStatement(
+                    "SELECT combo_id, quantity FROM invoice_combos WHERE invoice_id = ?")) {
+                psItems.setInt(1, invoiceId);
+                try (ResultSet rs = psItems.executeQuery()) {
+                    while (rs.next()) {
+                        psStock.setInt(1, rs.getInt("quantity"));
+                        psStock.setInt(2, rs.getInt("combo_id"));
+                        psStock.executeUpdate();
+                    }
+                }
+            }
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "UPDATE invoices SET payment_status = 'REFUNDED' WHERE invoice_id = ?")) {
+                ps.setInt(1, invoiceId);
+                ps.executeUpdate();
+            }
+            refund += " Hóa đơn không còn vé hiệu lực nên đã hoàn toàn bộ (kể cả combo).";
+        }
+        return refund;
+    }
+
+    private static String formatViTime(String ts) {
+        if (ts == null || ts.length() < 16) {
+            return ts;
+        }
+        return ts.substring(8, 10) + "/" + ts.substring(5, 7) + " " + ts.substring(11, 16);
     }
 
     private Ticket mapRowToTicket(ResultSet rs) throws SQLException {

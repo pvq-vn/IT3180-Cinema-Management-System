@@ -39,6 +39,10 @@ public class ComboController extends BaseController implements HttpHandler {
                 sb.append("]");
                 sendJson(exchange, 200, sb.toString());
             } else if ("POST".equalsIgnoreCase(method)) {
+                // RBAC: Quản lý rạp và Nhân viên quầy F&B được cập nhật danh mục Combo
+                if (requireRole(exchange, ROLE_MANAGER, ROLE_STAFF) == null) {
+                    return;
+                }
                 Map<String, String> body = JsonUtils.parseFlatObject(readRequestBody(exchange));
                 String action = body.getOrDefault("action", "save");
                 if ("toggle".equalsIgnoreCase(action)) {
@@ -55,7 +59,7 @@ public class ComboController extends BaseController implements HttpHandler {
                 c.setItemsIncluded(body.get("itemsIncluded"));
                 c.setPrice(Double.parseDouble(body.getOrDefault("price", "0")));
                 c.setStockQuantity(Integer.parseInt(body.getOrDefault("stockQuantity", "0")));
-                c.setStatus(body.getOrDefault("status", "AVAILABLE"));
+                c.setStatus(body.get("status"));
 
                 Combo saved = comboService.saveCombo(c);
                 sendJson(exchange, 200, "{\"success\":true,\"message\":\"Đã lưu gói Combo '"
@@ -63,10 +67,8 @@ public class ComboController extends BaseController implements HttpHandler {
             } else {
                 sendError(exchange, 405, "METHOD_NOT_ALLOWED", "Phương thức không được hỗ trợ.");
             }
-        } catch (IllegalArgumentException ex) {
-            sendError(exchange, 200, "VALIDATION_ERROR", ex.getMessage());
         } catch (Exception ex) {
-            sendError(exchange, 500, "SERVER_ERROR", ex.getMessage());
+            handleException(exchange, ex);
         }
     }
 

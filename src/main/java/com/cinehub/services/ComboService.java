@@ -71,17 +71,40 @@ public class ComboService {
         if (combo.getStockQuantity() < 0) {
             throw new IllegalArgumentException("Số lượng tồn kho không được âm.");
         }
-        String code = PasswordUtils.isBlank(combo.getComboCode())
-                ? "CB" + String.format("%02d", (int) (Math.random() * 89 + 10))
-                : combo.getComboCode().trim().toUpperCase();
+        String requestedStatus = PasswordUtils.isBlank(combo.getStatus())
+                ? null : combo.getStatus().trim().toUpperCase();
+        if (requestedStatus != null && !List.of("AVAILABLE", "OUT_OF_STOCK", "DISCONTINUED").contains(requestedStatus)) {
+            throw new IllegalArgumentException("Trạng thái Combo không hợp lệ: " + requestedStatus + ".");
+        }
         String items = PasswordUtils.isBlank(combo.getItemsIncluded())
                 ? "1 Bắp rang bơ + 1 Nước ngọt" : combo.getItemsIncluded().trim();
-        String status = PasswordUtils.isBlank(combo.getStatus())
-                ? (combo.getStockQuantity() > 0 ? "AVAILABLE" : "OUT_OF_STOCK")
-                : combo.getStatus().trim().toUpperCase();
 
         try (Connection conn = DatabaseConnection.getConnection()) {
+            String code = PasswordUtils.isBlank(combo.getComboCode())
+                    ? generateUniqueCode(conn) : combo.getComboCode().trim().toUpperCase();
+            // Sửa combo mà không gửi trạng thái: giữ trạng thái cũ (không vô tình mở bán lại combo đã ngừng)
+            String baseStatus = requestedStatus;
+            if (baseStatus == null && combo.getComboId() > 0) {
+                baseStatus = findStatus(conn, combo.getComboId());
+                if (baseStatus == null) {
+                    throw new IllegalArgumentException("Không tìm thấy gói Combo cần cập nhật.");
+                }
+            }
+            // Trạng thái bán phụ thuộc tồn kho: còn hàng = AVAILABLE, hết hàng = OUT_OF_STOCK
+            String status = "DISCONTINUED".equals(baseStatus)
+                    ? "DISCONTINUED" : (combo.getStockQuantity() > 0 ? "AVAILABLE" : "OUT_OF_STOCK");
+            combo.setStatus(status);
+            combo.setComboCode(code);
+
             if (combo.getComboId() <= 0) {
+                try (PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM combos WHERE combo_code = ?")) {
+                    ps.setString(1, code);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next() && rs.getInt(1) > 0) {
+                            throw new IllegalArgumentException("Mã Combo " + code + " đã tồn tại.");
+                        }
+                    }
+                }
                 String insertSql = "INSERT INTO combos (combo_code, name, description, items_included, "
                         + "price, stock_quantity, status) VALUES (?, ?, ?, ?, ?, ?, ?)";
                 try (PreparedStatement ps = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
@@ -119,6 +142,31 @@ public class ComboService {
         return combo;
     }
 
+    private String findStatus(Connection conn, int comboId) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement("SELECT status FROM combos WHERE combo_id = ?")) {
+            ps.setInt(1, comboId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getString("status") : null;
+            }
+        }
+    }
+
+    /** Sinh mã Combo dạng CBnn chưa được dùng. */
+    private String generateUniqueCode(Connection conn) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM combos WHERE combo_code = ?")) {
+            for (int n = 1; n < 1000; n++) {
+                String code = String.format("CB%02d", n);
+                ps.setString(1, code);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next() && rs.getInt(1) == 0) {
+                        return code;
+                    }
+                }
+            }
+        }
+        throw new IllegalStateException("Không sinh được mã Combo mới.");
+    }
+
     /**
      * Chuyển đổi trạng thái kinh doanh hoặc ngừng kinh doanh một Combo F&B.
      *
@@ -128,24 +176,36 @@ public class ComboService {
     public String toggleComboStatus(int comboId) {
         try (Connection conn = DatabaseConnection.getConnection()) {
             String currentStatus = null;
+            int currentStock = 0;
             try (PreparedStatement ps = conn.prepareStatement(
-                    "SELECT status FROM combos WHERE combo_id = ?")) {
+                    "SELECT status, stock_quantity FROM combos WHERE combo_id = ?")) {
                 ps.setInt(1, comboId);
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
                         currentStatus = rs.getString("status");
+                        currentStock = rs.getInt("stock_quantity");
                     }
                 }
             }
             if (currentStatus == null) {
                 throw new IllegalArgumentException("Không tìm thấy gói Combo cần cập nhật.");
             }
-            String nextStatus = "AVAILABLE".equalsIgnoreCase(currentStatus) ? "DISCONTINUED" : "AVAILABLE";
+            String nextStatus;
+            if (!"DISCONTINUED".equalsIgnoreCase(currentStatus)) {
+                nextStatus = "DISCONTINUED";
+            } else {
+                // Mở bán lại: hết hàng thì chuyển OUT_OF_STOCK, không mở bán combo không còn tồn kho
+                nextStatus = currentStock > 0 ? "AVAILABLE" : "OUT_OF_STOCK";
+            }
             try (PreparedStatement ps = conn.prepareStatement(
                     "UPDATE combos SET status = ? WHERE combo_id = ?")) {
                 ps.setString(1, nextStatus);
                 ps.setInt(2, comboId);
                 ps.executeUpdate();
+            }
+            if ("OUT_OF_STOCK".equals(nextStatus)) {
+                return "Combo đã được mở lại nhưng tồn kho bằng 0 nên vẫn ở trạng thái Hết hàng (OUT_OF_STOCK). "
+                        + "Hãy nhập thêm tồn kho để bán.";
             }
             return "Đã cập nhật trạng thái Combo sang " + nextStatus + ".";
         } catch (SQLException ex) {
